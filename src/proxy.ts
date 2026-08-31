@@ -4,12 +4,22 @@ import { PATHNAME_HEADER } from '@/shared/api/server';
 
 const PUBLIC_PATHS = ['/login'];
 
+const DEV_ONLY_PREFIX = '/dev';
+
 const isPublic = (pathname: string): boolean =>
   PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 
 export function proxy(request: NextRequest): NextResponse {
   const { pathname, search } = request.nextUrl;
   const current = `${pathname}${search}`;
+
+  if (serverEnv.isProduction && pathname.startsWith(DEV_ONLY_PREFIX)) {
+    const home = request.nextUrl.clone();
+    home.pathname = '/';
+    home.search = '';
+
+    return NextResponse.redirect(home);
+  }
 
   if (!request.cookies.has(serverEnv.sessionCookieName) && !isPublic(pathname)) {
     const url = request.nextUrl.clone();

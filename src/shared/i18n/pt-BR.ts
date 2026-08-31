@@ -17,6 +17,125 @@ export const ptBR = {
     signingOut: 'Saindo…',
   },
 
+  enums: {
+    classShift: {
+      MANHA: 'Manhã',
+      TARDE: 'Tarde',
+      INTEGRAL: 'Integral',
+    },
+    postAudience: {
+      TURMA: 'Turma inteira',
+      ALUNO: 'Alunos específicos',
+    },
+    postType: {
+      REGISTRO_DIARIO: 'Registro do dia',
+      RECADO: 'Recado',
+      EVENTO: 'Evento',
+    },
+    postStatus: {
+      RASCUNHO: 'Rascunho',
+      PUBLICADA: 'Publicada',
+      REMOVIDA: 'Removida',
+    },
+    commentStatus: {
+      PUBLICADO: 'Publicado',
+      REMOVIDO_PELO_AUTOR: 'Removido pelo autor',
+      REMOVIDO_PELA_ESCOLA: 'Removido pela escola',
+    },
+    journalEntryStatus: {
+      PUBLICADA: 'Publicada',
+      REMOVIDA_PELO_AUTOR: 'Removida pelo autor',
+      REMOVIDA_PELA_ESCOLA: 'Removida pela escola',
+    },
+    relationship: {
+      MAE: 'Mãe',
+      PAI: 'Pai',
+      AVO: 'Avó ou avô',
+      TIO: 'Tio ou tia',
+      IRMAO: 'Irmão ou irmã',
+      TUTOR_LEGAL: 'Tutor legal',
+      OUTRO: 'Outro',
+    },
+    teacherRole: {
+      TITULAR: 'Titular',
+      AUXILIAR: 'Auxiliar',
+      VOLANTE: 'Volante',
+    },
+    accessReason: {
+      COORDENACAO: 'Coordenação',
+      DIRECAO: 'Direção',
+      SECRETARIA: 'Secretaria',
+      SUBSTITUICAO: 'Substituição',
+      ESTAGIO: 'Estágio',
+      OUTRO: 'Outro',
+    },
+    consentType: {
+      IMAGEM_INTERNA: 'Uso interno da imagem',
+      IMAGEM_EXTERNA: 'Uso externo da imagem',
+      TRATAMENTO_BIOMETRICO: 'Tratamento biométrico',
+    },
+    consentOrigin: {
+      TERMO_MATRICULA: 'Termo de matrícula',
+      PORTAL_RESPONSAVEL: 'Portal do responsável',
+      IMPORTACAO: 'Importação',
+      SOLICITACAO_VERBAL: 'Solicitação verbal',
+    },
+    reportDimension: {
+      ACOLHIMENTO: 'Acolhimento',
+      ALIMENTACAO: 'Alimentação',
+      SONO: 'Sono',
+      SOCIALIZACAO: 'Socialização',
+      AUTONOMIA: 'Autonomia',
+      LINGUAGEM: 'Linguagem',
+      DESENVOLVIMENTO_MOTOR: 'Desenvolvimento motor',
+    },
+    reportLevel: {
+      NAO_OBSERVADO: 'Não observado',
+      EM_INICIO: 'Em início',
+      EM_DESENVOLVIMENTO: 'Em desenvolvimento',
+      CONSOLIDADO: 'Consolidado',
+    },
+    reportStatus: {
+      RASCUNHO: 'Rascunho',
+      PUBLICADO: 'Publicado',
+    },
+    scope: {
+      PROPRIA: 'Própria',
+      TURMA: 'Turma',
+      ESCOLA: 'Escola inteira',
+    },
+  },
+
+  common: {
+    loading: 'Carregando…',
+    retry: 'Tentar de novo',
+    cancel: 'Cancelar',
+    confirm: 'Confirmar',
+    search: 'Buscar',
+    noResults: 'Nada encontrado',
+    previousPage: 'Página anterior',
+    nextPage: 'Próxima página',
+    pageOf: (page: number, total: number) => `Página ${page} de ${total}`,
+    resultCount: (total: number) =>
+      total === 1 ? '1 resultado' : `${total.toLocaleString('pt-BR')} resultados`,
+    skipToContent: 'Ir para o conteúdo',
+    openMenu: 'Abrir menu',
+    closeMenu: 'Fechar menu',
+    theme: 'Tema',
+    themeLight: 'Claro',
+    themeDark: 'Escuro',
+    themeSystem: 'Do sistema',
+    remove: 'Remover',
+  },
+
+  errors: {
+    title: 'Alguma coisa deu errado',
+    description: 'Não conseguimos carregar esta parte da tela. Tente de novo em instantes.',
+    notFoundTitle: 'Página não encontrada',
+    notFoundDescription: 'O endereço não existe ou o conteúdo foi removido.',
+    backHome: 'Voltar para o início',
+  },
+
   forbidden: {
     title: 'Você não tem acesso a esta página',
     description:
