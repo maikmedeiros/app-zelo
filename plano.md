@@ -26,7 +26,7 @@ As diferenças que a 16 impôs estão registradas no [§12](#12-registro-de-exec
 | 0 — Fundação e tooling             | ✅     |
 | 1 — BFF, camada de API e contratos | ✅     |
 | 2 — Autenticação e autorização     | ✅     |
-| 3 — Design system e shell          | ⬜     |
+| 3 — Design system e shell          | ✅     |
 | 4 — Feed e postagens               | ⬜     |
 | 5 — Agenda do aluno                | ⬜     |
 | 6 — Turmas, alunos e matrículas    | ⬜     |
@@ -530,7 +530,7 @@ não se apoia um TCC em API instável.
 menu da §4.4 sai desta verificação: o `AppShell` é o passo 3.1, então a conferência do menu
 por perfil acontece no fim da Fase 3.
 
-### Fase 3 — Design system e shell ⬜
+### Fase 3 — Design system e shell ✅
 
 **3.1** `AppShell`: cabeçalho com identidade e avatar, navegação lateral no desktop, barra
 inferior no mobile, `skip-to-content`.
@@ -1083,3 +1083,81 @@ plantado pelo proxy chega ao servidor.
 - **`(app)/page.tsx` é provisória.** Hoje mostra perfis, turmas no escopo e número de
   concessões — é a superfície que tornou a Fase 2 verificável. A Fase 3 a substitui pelo
   `AppShell` com o redirecionamento por perfil da §4.5.
+
+### Fase 3 — Design system e shell ✅ (31/08/2026)
+
+**Entregue.** `AppShell` (cabeçalho com identidade e menu do usuário, navegação lateral no
+desktop, barra inferior no mobile com `Sheet` para o menu completo, `skip-to-content` e
+`main#conteudo`). `config/navigation.ts` declarando a capability de cada item, e
+`use-visible-navigation.ts` filtrando com `hasCapability`. Trinta e um componentes em
+`shared/components/`: `Button` · `IconButton` · `Input` · `Textarea` · `Field` · `Select` ·
+`Combobox` · `Checkbox` · `Switch` · `DatePicker` · `FileDropzone` · `Card` · `Badge` ·
+`Avatar` · `Table` · `DataTable` · `Pagination` · `Tabs` · `Dialog` · `AlertDialog` · `Sheet` ·
+`DropdownMenu` · `Toast` · `Skeleton` · `EmptyState` · `ErrorState` · `PageHeader` ·
+`Breadcrumbs` · `Gallery` · `ConsentBadge` · `LevelPicker`. Mais os hooks `useDebounce` e
+`useUrlPagination`, a rota `/dev/ui` com o catálogo, `error.tsx`, `global-error.tsx`,
+`not-found.tsx`, `(app)/loading.tsx`, o `ToastProvider` no `providers.tsx` e os 15 enums da
+§3.8 traduzidos em `shared/i18n/pt-BR.ts`.
+
+**Verificação.** `npm run lint` e `npm run build` limpos. O menu por perfil — o passo **2.8**,
+que tinha ficado para cá — sai do servidor já filtrado:
+
+| Perfil        | Menu renderizado                                                                                                                                                             |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| RESPONSAVEL   | Feed · Alunos · Turmas · Relatórios · Minha conta                                                                                                                            |
+| PROFESSOR     | Feed · Nova postagem · Alunos · Turmas · Relatórios · Modelos · Responsáveis · Matrículas · Responsável e aluno · Minha conta                                                |
+| COORDENACAO   | tudo do professor + Pessoas · Professores · Contas de acesso · Professor e turma · Acessos a turma · Anos letivos · Perfis e permissões · Concessões de perfil · Minha conta |
+| ADMINISTRADOR | idêntico ao da coordenação                                                                                                                                                   |
+| (sem perfil)  | Minha conta                                                                                                                                                                  |
+
+A barra inferior do responsável traz Feed · Alunos · Abrir menu. `/dev/ui` responde `200` em
+desenvolvimento e `307 → /` no servidor de produção (`node .next/standalone/server.js`), que
+também confirmou `NODE_ENV=production` chegando ao `serverEnv`. Rota inexistente devolve `404`
+com o `not-found.tsx`. `Cookie: zelo-theme=dark` sai renderizado como `data-theme="dark"` já no
+HTML do servidor.
+
+**Divergências encontradas.**
+
+1. **`notFound()` sob layout assíncrono devolve `200`.** O corpo era o certo — a página de não
+   encontrado —, mas o status já estava comprometido: o shell do `(app)/layout.tsx` começa a
+   streamar antes de a página lançar. O corte de `/dev/*` em produção subiu para o `proxy.ts`,
+   que roda **antes** de qualquer render e devolve um `307` de verdade. O `notFound()` ficou na
+   página como segunda linha de defesa.
+2. **`next start` não serve `output: 'standalone'`.** O próprio Next avisa e manda usar
+   `node .next/standalone/server.js`, depois de copiar `.next/static` e `public` para dentro da
+   pasta. Anotado para o passo 13.2 — e é por isso que a verificação de produção desta fase
+   rodou pelo standalone.
+3. **Radix não tem Combobox.** O pacote unificado `radix-ui` (1.6.7) traz `Popover`, e o
+   combobox é composição própria: `input` com `role="combobox"`, listbox com `role="option"`,
+   seta e Enter, busca por `useDebounce`. Ficou sem `cmdk` — uma dependência a menos para um
+   componente que precisa falar o vocabulário do projeto.
+4. **`ownScopeLabel` nasceu e morreu no mesmo dia.** "Meus filhos", da §4.4, não sai das
+   capabilities: o responsável enxerga o aluno por `VIEW:STUDENT:TURMA` — mesma capability e
+   mesma abrangência do professor. O que muda é o conjunto de turmas do ator, não a permissão.
+   Ou o rótulo viria do nome do perfil, que a §4.4 proíbe, ou fica neutro. Ficou "Alunos".
+5. **A tabela da §4.4 é aproximação, e a capability é a régua.** O professor vê "Responsáveis"
+   e "Responsável e aluno" porque tem `VIEW:GUARDIAN:TURMA` e `VIEW:GUARDIAN_LINK`; a
+   coordenação vê "Perfis e permissões" porque tem `VIEW:ROLE` (só leitura — `CREATE` e
+   `UPDATE` continuam fora). Coordenação e administrador têm o **mesmo menu**: o que os separa
+   são ações de escrita, que não são item de menu. Isso é o mecanismo funcionando, não falha.
+
+**Decisões registradas.**
+
+- **`DatePicker` é `<input type="date">` estilizado.** Calendário próprio custaria dependência
+  ou muito código; o nativo já traz teclado, locale e leitor de tela. `date-fns` continua para
+  formatação de exibição.
+- **O menu aponta para rotas que ainda não existem** (Fases 4 a 11). É o mapa da §4.4 completo
+  desde já; o `not-found.tsx` cobre o intervalo. Preferi isso a esconder item por
+  disponibilidade e ter de lembrar de reativar em cada fase.
+- **`(app)/page.tsx` deixou de ser painel de sessão** e virou uma home de atalhos, derivada do
+  mesmo filtro do menu. O redirecionamento por perfil da §4.5 entra na Fase 4, quando `/feed`
+  existir: redirecionar hoje seria mandar todo mundo para um 404.
+- **O `ThemeToggle` recebe o tema atual como prop do servidor.** Ler `dataset.theme` num efeito
+  causaria `setState` em cascata e um quadro no tema errado. Escrever é no cliente e direto —
+  `document.cookie` mais `dataset.theme` —, sem round-trip e sem Server Action.
+- **Não existe barril em `shared/components/`.** Import por arquivo, como em `shared/api/`:
+  um índice arrastaria todo componente cliente para o grafo de qualquer página de servidor.
+- **`Field` não está na lista da §4.3**, mas rótulo, dica, erro e `aria-describedby` precisam
+  morar em algum lugar que não seja copiado em cada formulário.
+- **`<img>` no `Gallery` e no `Avatar`**, com `eslint-disable` da regra do Next: é a §3.6 — o
+  otimizador buscaria a imagem sem o cookie do usuário e levaria 401.
