@@ -24,8 +24,8 @@ As diferenças que a 16 impôs estão registradas no [§12](#12-registro-de-exec
 | Fase                               | Estado |
 | ---------------------------------- | ------ |
 | 0 — Fundação e tooling             | ✅     |
-| 1 — BFF, camada de API e contratos | ⬜     |
-| 2 — Autenticação e autorização     | ⬜     |
+| 1 — BFF, camada de API e contratos | ✅     |
+| 2 — Autenticação e autorização     | ✅     |
 | 3 — Design system e shell          | ⬜     |
 | 4 — Feed e postagens               | ⬜     |
 | 5 — Agenda do aluno                | ⬜     |
@@ -458,6 +458,11 @@ mas mantém a porta aberta para depuração direta.
 Server Components são testados como função assíncrona (chamando e inspecionando a árvore
 retornada), não pelo DOM. Não haverá E2E com navegador: o custo não se paga no recorte do TCC.
 
+**Quando.** A suíte automatizada entra **de uma vez, depois da Fase 12**, e não fase a fase.
+Decisão de 31/08/2026: com o contrato do back ainda sendo exercido pela primeira vez, mock
+escrito cedo vira mock errado — a régua de cada fase é a API real em `:3003`. O item 1.10
+(primeiro handler MSW) migrou para cá.
+
 ---
 
 ## 8. Fases
@@ -484,7 +489,7 @@ por Zod.
 Next são gerados, e sem o `typegen` o `tsc` sozinho não acha `LayoutProps`), `lint:eslint:*`,
 `lint:prettier:*` e o `lint` que roda os três. Primeiro commit.
 
-### Fase 1 — BFF, camada de API e contratos ⬜
+### Fase 1 — BFF, camada de API e contratos ✅
 
 **1.1** `shared/api/server.ts` (`server-only`): fetch tipado para `API_URL`, lê o cookie com
 `cookies()` e o encaminha, `cache: 'no-store'`, serialização de query omitindo `undefined`.
@@ -501,9 +506,11 @@ helper `fieldErrorsFrom(cause)` que converte as `issues` do Zod em `Record<campo
 **1.8** `providers.tsx` com `QueryClient` (sem retry em 4xx, `staleTime` 30 s) e
 `HydrationBoundary`.
 **1.9** `config/features.ts`: as **79 capabilities** copiadas do enum do back.
-**1.10** MSW configurado com o primeiro handler (`/sessions`), provando o envelope.
+**1.10** ~~MSW configurado com o primeiro handler (`/sessions`), provando o envelope.~~
+**Adiado para a fase de testes** (§7): a suíte automatizada inteira entra no fim, e até lá a
+verificação de cada fase é contra a API real em `:3003`.
 
-### Fase 2 — Autenticação e autorização ⬜
+### Fase 2 — Autenticação e autorização ✅
 
 `POST /sessions` · `GET /sessions/current` · `DELETE /sessions/current`
 
@@ -519,8 +526,9 @@ estado de envio, `autocomplete` correto, `?next=` respeitado no retorno.
 `forbidden()` do Next: essa função ainda é canary (exige `experimental.authInterrupts`), e
 não se apoia um TCC em API instável.
 **2.7** Logout limpando o cache do Query por inteiro e o cookie.
-**2.8** **Verificação:** login com os quatro perfis do seed; cada um recebe o menu da §4.4, e
-forçar uma URL fora do perfil cai em `/403`.
+**2.8** **Verificação:** login com os perfis do seed e URL fora do perfil caindo em `/403`. O
+menu da §4.4 sai desta verificação: o `AppShell` é o passo 3.1, então a conferência do menu
+por perfil acontece no fim da Fase 3.
 
 ### Fase 3 — Design system e shell ⬜
 
@@ -877,7 +885,8 @@ que a família e o professor usam todo dia). 6 → 8 abrem o cadastro. 9 → 11 
 diferencial do TCC (LGPD, desenvolvimento infantil, autorização granular). 12 e 13 acabam.
 
 Cada fase termina com: build limpo, lint limpo, tela exercitada contra a API real, linha da
-tabela de "Estado atual" atualizada e commit em Conventional Commits.
+tabela de "Estado atual" atualizada e commit em Conventional Commits. A suíte de testes vem
+depois da 12, num bloco só (§7).
 
 ---
 
@@ -930,3 +939,147 @@ lê o cookie do tema), sem `X-Powered-By`, e o CSS servido carrega `--brand: #2f
   quem for usar vai ler.
 - O tema sai de cookie lido no `RootLayout`, e não de `localStorage`. O custo é a raiz virar
   dinâmica; o ganho é não piscar no tema errado na primeira pintura.
+
+### Fase 1 — BFF, camada de API e contratos ✅ (31/08/2026)
+
+**Entregue.** `shared/api/` com `types.ts` (`Paginated<T>`, `Collection<T>`, `ApiErrorBody`,
+`ValidationIssue`), `errors.ts` (`ApiError` + `fieldErrorsFrom` + `networkError`),
+`query-string.ts` (omite `undefined`/`null`, repete a chave em array, `Date` → ISO),
+`allowed-paths.ts` (allowlist de prefixos e sanitização de segmento), `server.ts`
+(`server-only`, encaminha o cookie lido por `cookies()`, `cache: 'no-store'`), `client.ts`
+(`client-only`, same-origin, aceita `FormData`), `proxy.ts` (o encaminhamento de verdade) e
+`query-keys.ts` (fábrica hierárquica dos 18 recursos). Mais
+`app/api/v1/[...path]/route.ts`, `app/providers.tsx` com o `QueryClient`,
+`shared/api/hydrate.tsx` com o `HydrationBoundary`, e `config/features.ts` com as 79
+capabilities.
+
+**Verificação.** Contra a API real em `:3003`, com o seed `demo.sql` (`ana@zelo.test`):
+`npm run lint` e `npm run build` limpos. Pelo proxy: prefixo fora da allowlist → `404`;
+`/api/v1/posts/../../../etc/passwd` → `404`; `PROPFIND` → `400`; sem cookie → o `401` da API
+atravessa; `POST /api/v1/sessions` → `201` e o `Set-Cookie` grava `ZELO_APP_DEV` no domínio do
+Next; `GET /api/v1/sessions/current` devolve `permissions` no formato de três segmentos;
+`GET /api/v1/posts?page=1&limit=2` devolve o envelope paginado com `totalPages` do banco;
+`POST /api/v1/posts` inválido devolve `cause` com as `issues` do Zod (`path: ['audience']`),
+que é o que o `fieldErrorsFrom` consome. Pelo `serverApi`, num Route Handler descartável: com
+sessão, `200` com os dados; sem sessão, `307` para `/login`. O caminho de bytes foi provado
+subindo um PNG de 70 bytes por `multipart` (`PUT /people/:id/photo` → `200`), lendo de volta
+(`200`, `image/png`, `content-length: 70`, `Cache-Control: private, max-age=300`, bytes
+idênticos) e removendo em seguida (`204`, depois `404`) — o seed ficou como estava.
+
+**Divergências encontradas.**
+
+1. **O proxy não podia morar inteiro no `route.ts`.** A regra 1 da §2 virou
+   `no-restricted-globals` sobre `fetch` na Fase 0, com `src/shared/api/**` como única
+   exceção — e o Route Handler bateu nela. O encaminhamento foi para `shared/api/proxy.ts`
+   (`server-only`) e o `route.ts` ficou com os cinco exports e a leitura do `params`, que é o
+   que a regra 2 da §2 já queria.
+2. **A allowlist de métodos, na prática, é a lista de exports.** O Next implementa `HEAD` e
+   `OPTIONS` sozinho: `HEAD` cai no handler do `GET` (leitura, inofensivo) e um método
+   desconhecido como `PROPFIND` morre em `400` antes de chegar ao arquivo.
+3. **`duplex: 'half'` não existe no `RequestInit` do TypeScript**, mas o undici exige quando o
+   corpo é `ReadableStream`. Daí o `as RequestInit` no `fetch` do proxy — sem ele, upload
+   `multipart` não sai.
+4. **`redirect()` funciona também dentro de Route Handler**: o `401` do `server.ts` virou `307`
+   com `Location: /login`, e não uma exceção vazando.
+
+**Decisões registradas.**
+
+- **Não existe `shared/api/index.ts`.** `server.ts` importa `server-only` e `client.ts`
+  importa `client-only`; um barril que reexportasse os dois quebraria os dois lados. Cada
+  import é pelo arquivo.
+- **O `?next=` do 401 de servidor ficou como `TODO(fase-2)`.** O pathname atual não é legível
+  de dentro do `serverApi`; quem vai plantá-lo num header é o `proxy.ts` do passo 2.3.
+- **O 401 do cliente navega com `window.location.assign`**, com `eslint-disable` da regra do
+  Next. É navegação dura de propósito: é ela que joga fora o cache do TanStack Query junto com
+  o documento. `router.push` deixaria sessão morta em memória.
+- **A allowlist é de prefixo de recurso** — os 18 do back — mais recusa de segmento vazio,
+  `.`, `..` ou com barra invertida, e `encodeURIComponent` em cada segmento.
+- **`sessions` ficou na allowlist.** É o que torna `GET /sessions/current` alcançável do
+  cliente. `POST /sessions` também passa por ali, mas faz exatamente o que
+  `/api/auth/login` fará na Fase 2 — mesmo repasse de `Set-Cookie`, mesma origem. Não é
+  brecha; a rota de auth existe para dar nome e validação ao fluxo, não para ser o único
+  caminho fisicamente possível.
+- **`Cache-Control` da resposta do proxy:** o do upstream passa, a menos que contenha
+  `public` — nesse caso vira `private, no-store`. É a §3.6 escrita em código, e não em
+  comentário.
+- **Falha de rede vira `ApiError(502, 'ServiceError')`** nos dois lados e no proxy, para que a
+  UI tenha um caminho de erro só, com o mesmo envelope da API.
+
+### Fase 2 — Autenticação e autorização ✅ (31/08/2026)
+
+**Entregue.** `modules/sessions/` com `types.ts`, `schemas/create-session.ts` (espelho
+`strictObject` do back) e `api/find-current-session.ts`. `shared/auth/` com `session.ts`,
+`capabilities.ts` (`scopesOf`, `hasCapability`, `widestScope`, `isInClass`),
+`current-session.ts` (`cache()` sobre `GET /sessions/current`), `session-context.tsx`
+(`SessionProvider`, `useSession`, `useCan`, `useScopesOf`, `useWidestScope`, `<Can>`) e
+`require-capability.tsx`. `app/api/auth/login/route.ts` e `logout/route.ts` com o repasse do
+`Set-Cookie`. `src/proxy.ts`. Tela `(auth)/login` com React Hook Form + Zod. `(app)/layout.tsx`
+injetando a sessão, `(app)/page.tsx` provisória e `app/403/page.tsx`. Mais
+`shared/i18n/pt-BR.ts`, estreando com os textos de autenticação.
+
+**Verificação.** `npm run lint` e `npm run build` limpos. Contra a API em `:3003`: sem cookie,
+`/` devolve `307 → /login?next=%2F` e `/students/abc?tab=journal` devolve
+`307 → /login?next=%2Fstudents%2Fabc%3Ftab%3Djournal`; `/login` responde `200`. Senha errada
+devolve `401` **sem** `Set-Cookie`; corpo inválido devolve `400` com as `issues` nos dois
+campos. Login dos perfis do seed (senha `zelo123`), com a sessão lida no servidor:
+
+| Usuário            | Perfil        | Turmas no escopo | Concessões |
+| ------------------ | ------------- | ---------------- | ---------- |
+| `ana@zelo.test`    | PROFESSOR     | 1                | 36         |
+| `bruno@zelo.test`  | RESPONSAVEL   | 1                | 19         |
+| `diana@zelo.test`  | COORDENACAO   | 1                | 74         |
+| `isabel@zelo.test` | ADMINISTRADOR | 0                | 79         |
+| `fabio@zelo.test`  | (sem perfil)  | 0                | 0          |
+
+Numa rota descartável guardada por `RequireCapability feature={Feature.RoleView}`: Diana e
+Isabel entram (`200`), Ana, Bruno e Fábio caem em `/403`. Logout devolve `204` repassando
+`ZELO_APP_DEV=invalid; Max-Age=-1`, e a requisição seguinte volta a ser barrada pelo proxy.
+Com cookie **inválido** o proxy deixa passar (ele só olha presença) e é o `serverApi` que pega
+o `401` e monta `307 → /login?next=%2Fguard-check` — que é a prova de que o header de pathname
+plantado pelo proxy chega ao servidor.
+
+**Divergências encontradas.**
+
+1. **O seed não tinha persona ADMINISTRADOR — e passou a ter.** `demo.sql` concedia
+   `PROFESSOR`, `RESPONSAVEL` e `COORDENACAO`, e deixava Fábio **sem perfil nenhum**, de
+   propósito, para exercitar o 403. O perfil `ADMINISTRADOR` existia (migration 007) e tinha
+   um único portador: o usuário de bootstrap da migration 004 — login `admin`, senha `admin`,
+   sem formato de e-mail. Conta de sistema não é persona de demonstração, então o seed ganhou
+   **Isabel Prado** (`isabel@zelo.test`, senha `zelo123`, CPF `10888888872`), com
+   `ADMINISTRADOR`. As 79 concessões que ela recebe são o catálogo inteiro — o que também
+   confere, de lado, que o espelho em `config/features.ts` não perdeu nem inventou capability.
+   Foi a única alteração feita em `../zelo` até aqui.
+2. **O menu da §4.4 saiu da verificação da Fase 2.** O `AppShell` é o passo 3.1: não havia o
+   que conferir. A checagem de menu por perfil foi para o fim da Fase 3.
+3. **`app/page.tsx` teve de sair.** O route group `(app)` não acrescenta segmento, então
+   `app/page.tsx` e `app/(app)/page.tsx` disputam a mesma rota `/`. A página de fundação da
+   Fase 0 foi substituída pela de dentro do grupo.
+4. **Trocar a árvore de rotas exige apagar o `.next`.** Depois de remover `app/page.tsx`, o
+   `next typegen` continuou emitindo um `validator.ts` que importava o arquivo morto
+   (`TS2307`). `rm -rf .next` resolve; o typegen não invalida o que já gerou.
+
+**Decisões registradas.**
+
+- **O guard do cliente esconde, não redireciona.** `<RequireCapability>` (servidor) manda para
+  `/403`; no cliente o que existe é `<Can>`, que troca o filho por um fallback. A §3.5 diz que
+  o guard do front existe para **não oferecer** caminho que termina em 403 — redirecionar
+  depois de já ter desenhado o botão seria descobrir tarde demais.
+- **O `?next=` do 401 de servidor saiu do `TODO` da Fase 1.** O `proxy.ts` planta
+  `x-zelo-pathname` no header da requisição (`NextResponse.next({ request: { headers } })`) e
+  o `server.ts` o lê com `headers()`. Sem o header — Route Handler, que o matcher exclui — o
+  destino é `/login` puro.
+- **O proxy não redireciona quem já tem cookie para fora de `/login`.** Seria o atalho óbvio,
+  e é uma armadilha: cookie expirado passa pelo proxy, o layout leva 401 e manda para
+  `/login`, que o proxy devolveria para `/` — laço infinito. Quem decide se a sessão vale é o
+  servidor, uma vez só.
+- **`?next=` é sanitizado antes de navegar:** só caminho começando por `/` e que não comece
+  por `//`. Sem isso o parâmetro vira redirecionamento aberto para outro domínio.
+- **O login não passa pelo `clientApi`.** `authApi` fala com `/api/auth/*` e desliga o
+  redirecionamento automático de 401 — na tela de login, `401` é "senha errada", não "sessão
+  perdida", e mandar para `/login` quem já está em `/login` apagaria a mensagem de erro.
+- **O logout limpa o `QueryClient` inteiro** (`queryClient.clear()`) antes de navegar, e o
+  Route Handler apaga o cookie por conta própria quando a API responde sem `Set-Cookie` (o
+  caso de sessão já expirada).
+- **`(app)/page.tsx` é provisória.** Hoje mostra perfis, turmas no escopo e número de
+  concessões — é a superfície que tornou a Fase 2 verificável. A Fase 3 a substitui pelo
+  `AppShell` com o redirecionamento por perfil da §4.5.
