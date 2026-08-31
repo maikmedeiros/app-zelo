@@ -1,0 +1,178 @@
+@import 'tailwindcss';
+
+/*
+  Paleta clara é a definição base. O tema escuro só REDEFINE tokens:
+  - `prefers-color-scheme` é o padrão, guardado por `:not([data-theme='light'])`;
+  - `[data-theme]` vem do cookie e vence nos dois sentidos.
+  Nenhuma cor tem sua única definição dentro de um bloco de media ou de atributo.
+*/
+:root {
+  --bg: #f7f8f7;
+  --surface: #ffffff;
+  --surface-muted: #f1f3f2;
+  --border: #dfe4e2;
+
+  --text: #131a18;
+  --text-muted: #5a6663;
+
+  --brand: #2f6f62;
+  --brand-hover: #275c51;
+  --brand-soft: #e7f1ee;
+  --on-brand: #ffffff;
+
+  /* Âmbar não alcança 4.5:1 sobre branco — é cor de FUNDO de selo, com `--on-accent` por
+     cima. Nunca use `--accent` como cor de texto sobre `--surface`. */
+  --accent: #e8a33d;
+  --accent-soft: #fcf2e1;
+  --on-accent: #3a2a0c;
+
+  --danger: #c0392b;
+  --danger-soft: #fbeae8;
+  --on-danger: #ffffff;
+
+  --success: #2e7d5b;
+  --success-soft: #e6f2ec;
+
+  --ring: #2f6f62;
+
+  --radius-card: 0.75rem;
+  --radius-control: 0.5rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #0e1113;
+    --surface: #14181b;
+    --surface-muted: #1b2124;
+    --border: #2a3236;
+
+    --text: #e8edeb;
+    --text-muted: #9aa8a4;
+
+    --brand: #5fae9c;
+    --brand-hover: #74bfae;
+    --brand-soft: #17302b;
+    --on-brand: #06120f;
+
+    --accent: #e8a33d;
+    --accent-soft: #33280f;
+    --on-accent: #1a1204;
+
+    --danger: #e4695b;
+    --danger-soft: #331916;
+    --on-danger: #170a08;
+
+    --success: #5fb98f;
+    --success-soft: #14291f;
+
+    --ring: #5fae9c;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #0e1113;
+  --surface: #14181b;
+  --surface-muted: #1b2124;
+  --border: #2a3236;
+
+  --text: #e8edeb;
+  --text-muted: #9aa8a4;
+
+  --brand: #5fae9c;
+  --brand-hover: #74bfae;
+  --brand-soft: #17302b;
+  --on-brand: #06120f;
+
+  --accent: #e8a33d;
+  --accent-soft: #33280f;
+  --on-accent: #1a1204;
+
+  --danger: #e4695b;
+  --danger-soft: #331916;
+  --on-danger: #170a08;
+
+  --success: #5fb98f;
+  --success-soft: #14291f;
+
+  --ring: #5fae9c;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border);
+
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-soft: var(--brand-soft);
+  --color-on-brand: var(--on-brand);
+
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-on-danger: var(--on-danger);
+
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+
+  --color-ring: var(--ring);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-card: var(--radius-card);
+  --radius-control: var(--radius-control);
+}
+
+@layer base {
+  html {
+    color-scheme: light dark;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  /* O anel de foco é requisito de acessibilidade, não decoração: nunca remova. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* Alvo de toque de 44 px (WCAG 2.2 AA, 2.5.8). */
+  button,
+  a,
+  [role='button'],
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+  }
+
+  /* Número em tabela alinha por coluna. */
+  table {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

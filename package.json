@@ -1,0 +1,63 @@
+{
+  "name": "app-zelo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "prepare": "husky",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "next typegen && tsc --noEmit",
+    "lint:eslint:check": "eslint",
+    "lint:eslint:fix": "eslint --fix",
+    "lint:prettier:check": "prettier --check .",
+    "lint:prettier:fix": "prettier --write .",
+    "lint": "npm run typecheck && npm run lint:eslint:check && npm run lint:prettier:check"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.9.1",
+    "@tanstack/react-query": "^5.102.8",
+    "client-only": "^0.0.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.4.0",
+    "lucide-react": "^1.38.0",
+    "next": "16.3.3",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-hook-form": "^7.87.0",
+    "server-only": "^0.0.1",
+    "tailwind-merge": "^3.6.0",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.2",
+    "@commitlint/config-conventional": "^21.2.2",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^24.13.3",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.3",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-prettier": "^5.5.6",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.4.1",
+    "prettier": "^3.9.6",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "description": "Front-end da plataforma Zelo — comunicação escola-família para educação infantil",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,mjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{md,json,yml,yaml,css}": [
+      "prettier --write"
+    ]
+  }
+}
