@@ -98,7 +98,7 @@ export const clientApi = {
     request<T>('PUT', `${BFF_PREFIX}${path}`, { ...options, body: body ?? {} }),
   patch: <T>(path: string, body?: unknown, options?: RequestOptions) =>
     request<T>('PATCH', `${BFF_PREFIX}${path}`, { ...options, body: body ?? {} }),
-  delete: <T = void>(path: string, options?: RequestOptions) =>
+  delete: <T = void>(path: string, options?: RequestOptions & { body?: unknown }) =>
     request<T>('DELETE', `${BFF_PREFIX}${path}`, options),
 };
 
