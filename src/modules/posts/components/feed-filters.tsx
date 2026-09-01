@@ -1,9 +1,9 @@
 'use client';
 
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Feature } from '@/config/features';
 import { useCan } from '@/shared/auth/session-context';
 import { Select } from '@/shared/components/select';
+import { ALL, useUrlFilters } from '@/shared/hooks/use-url-filters';
 import { ptBR } from '@/shared/i18n/pt-BR';
 import type { Paginated } from '@/shared/api/types';
 import type { StudentOutput } from '@/modules/students/types';
@@ -11,27 +11,11 @@ import { useFindListClasses } from '@/modules/classes/api/find-list-classes.clie
 import { StudentFilter } from './student-filter';
 import { POST_TYPES } from '../types';
 
-const ALL = 'todos';
-
 export function FeedFilters({ students }: { students: Paginated<StudentOutput> }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const { get, set } = useUrlFilters();
   const canSeeDrafts = useCan(Feature.PostCreate);
 
   const classes = useFindListClasses({ limit: 100 });
-
-  const update = (key: string, value: string) => {
-    const params = new URLSearchParams(searchParams);
-
-    if (value === ALL) params.delete(key);
-    else params.set(key, value);
-
-    params.delete('page');
-
-    const query = params.toString();
-    router.push(query.length > 0 ? `${pathname}?${query}` : pathname);
-  };
 
   return (
     <div className="flex flex-wrap gap-3">
@@ -41,8 +25,8 @@ export function FeedFilters({ students }: { students: Paginated<StudentOutput> }
         </label>
         <Select
           id="filtro-turma"
-          value={searchParams.get('classId') ?? ALL}
-          onValueChange={(value) => update('classId', value)}
+          value={get('classId') ?? ALL}
+          onValueChange={(value) => set('classId', value)}
           options={[
             { value: ALL, label: 'Todas as turmas' },
             ...(classes.data?.results ?? []).map((item) => ({
@@ -54,9 +38,9 @@ export function FeedFilters({ students }: { students: Paginated<StudentOutput> }
       </div>
 
       <StudentFilter
-        value={searchParams.get('studentId')}
+        value={get('studentId')}
         initialStudents={students}
-        onChange={(studentId) => update('studentId', studentId ?? ALL)}
+        onChange={(studentId) => set('studentId', studentId)}
       />
 
       <div className="flex min-w-48 flex-col gap-1.5">
@@ -65,8 +49,8 @@ export function FeedFilters({ students }: { students: Paginated<StudentOutput> }
         </label>
         <Select
           id="filtro-tipo"
-          value={searchParams.get('type') ?? ALL}
-          onValueChange={(value) => update('type', value)}
+          value={get('type') ?? ALL}
+          onValueChange={(value) => set('type', value)}
           options={[
             { value: ALL, label: 'Todos os tipos' },
             ...POST_TYPES.map((type) => ({ value: type, label: ptBR.enums.postType[type] })),
@@ -81,8 +65,8 @@ export function FeedFilters({ students }: { students: Paginated<StudentOutput> }
           </label>
           <Select
             id="filtro-status"
-            value={searchParams.get('status') ?? 'PUBLICADA'}
-            onValueChange={(value) => update('status', value)}
+            value={get('status') ?? 'PUBLICADA'}
+            onValueChange={(value) => set('status', value)}
             options={[
               { value: 'PUBLICADA', label: ptBR.enums.postStatus.PUBLICADA },
               { value: 'RASCUNHO', label: ptBR.enums.postStatus.RASCUNHO },

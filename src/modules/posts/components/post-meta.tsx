@@ -1,13 +1,9 @@
 import { CalendarDays, MessageCircle } from 'lucide-react';
 import { ptBR } from '@/shared/i18n/pt-BR';
 import { Badge } from '@/shared/components/badge';
+import { formatDate } from '@/shared/utils/date';
 import type { PostOutput } from '../types';
 import { isDraft } from '../types';
-
-export const formatDate = (isoDate: string): string => {
-  const [year, month, day] = isoDate.slice(0, 10).split('-');
-  return `${day}/${month}/${year}`;
-};
 
 export function PostAudienceChips({ post }: { post: PostOutput }) {
   const labels =

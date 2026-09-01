@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { parseSearchParams, type RawSearchParams } from '@/shared/api/search-params';
 import { POST_QUERYABLE_STATUSES, POST_TYPES } from '../types';
 
 export const findListPostsSchema = z.object({
@@ -13,27 +14,5 @@ export const findListPostsSchema = z.object({
 
 export type FindListPostsParams = z.infer<typeof findListPostsSchema>;
 
-export const parseFeedSearchParams = (
-  searchParams: Record<string, string | string[] | undefined>,
-): FindListPostsParams => {
-  const first = (value: string | string[] | undefined): string | undefined =>
-    Array.isArray(value) ? value[0] : value;
-
-  const candidate = {
-    page: first(searchParams.page),
-    limit: first(searchParams.limit),
-    classId: first(searchParams.classId),
-    studentId: first(searchParams.studentId),
-    authorId: first(searchParams.authorId),
-    status: first(searchParams.status),
-    type: first(searchParams.type),
-  };
-
-  const cleaned = Object.fromEntries(
-    Object.entries(candidate).filter(([, value]) => value !== undefined && value !== ''),
-  );
-
-  const parsed = findListPostsSchema.safeParse(cleaned);
-
-  return parsed.success ? parsed.data : findListPostsSchema.parse({});
-};
+export const parseFeedSearchParams = (raw: RawSearchParams): FindListPostsParams =>
+  parseSearchParams(findListPostsSchema, raw);
