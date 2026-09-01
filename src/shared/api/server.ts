@@ -8,6 +8,8 @@ import type { ApiErrorBody, HttpMethod, RequestOptions } from './types';
 
 export const PATHNAME_HEADER = 'x-zelo-pathname';
 
+const FORBIDDEN_PATH = '/403';
+
 interface ServerRequestOptions extends RequestOptions {
   body?: unknown;
 }
@@ -86,6 +88,7 @@ const request = async <T>(
   const response = await apiRequest(method, path, options);
 
   if (response.status === 401) redirect(await loginPath());
+  if (response.status === 403) redirect(FORBIDDEN_PATH);
 
   if (!response.ok) throw new ApiError(response.status, await readErrorBody(response));
 

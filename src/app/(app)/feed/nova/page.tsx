@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Feature } from '@/config/features';
 import { isApiError } from '@/shared/api/errors';
-import { RequireCapability } from '@/shared/auth/require-capability';
+import { requireCapability } from '@/shared/auth/require-capability';
 import { Breadcrumbs } from '@/shared/components/breadcrumbs';
 import { PageHeader } from '@/shared/components/page-header';
 import { findPostById } from '@/modules/posts/api/find-post-by-id';
@@ -25,26 +25,26 @@ const loadDraft = async (postId: string | undefined): Promise<PostOutput | undef
 
 export default async function NewPostPage({ searchParams }: PageProps<'/feed/nova'>) {
   const { rascunho } = await searchParams;
+
+  await requireCapability(Feature.PostCreate);
   const draft = await loadDraft(typeof rascunho === 'string' ? rascunho : undefined);
 
   return (
-    <RequireCapability feature={Feature.PostCreate}>
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-        <PageHeader
-          title={draft === undefined ? 'Nova postagem' : 'Editar rascunho'}
-          description="A postagem nasce como rascunho. Publicar é o último passo."
-          breadcrumbs={
-            <Breadcrumbs
-              items={[
-                { label: 'Feed', href: '/feed' },
-                { label: draft === undefined ? 'Nova postagem' : 'Rascunho' },
-              ]}
-            />
-          }
-        />
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
+      <PageHeader
+        title={draft === undefined ? 'Nova postagem' : 'Editar rascunho'}
+        description="A postagem nasce como rascunho. Publicar é o último passo."
+        breadcrumbs={
+          <Breadcrumbs
+            items={[
+              { label: 'Feed', href: '/feed' },
+              { label: draft === undefined ? 'Nova postagem' : 'Rascunho' },
+            ]}
+          />
+        }
+      />
 
-        <PostComposer post={draft} />
-      </div>
-    </RequireCapability>
+      <PostComposer post={draft} />
+    </div>
   );
 }
