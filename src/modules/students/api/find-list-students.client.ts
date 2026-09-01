@@ -4,10 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 import { clientApi } from '@/shared/api/client';
 import { queryKeys } from '@/shared/api/query-keys';
 import type { Paginated } from '@/shared/api/types';
-import type { FindListStudentsParams, StudentOutput } from '../types';
+import type { FindListStudentsParams } from '../schemas/find-list-students';
+import type { StudentOutput } from '../types';
 
 export const useFindListStudents = (
-  params: FindListStudentsParams,
+  params: Partial<FindListStudentsParams>,
   initialData?: Paginated<StudentOutput>,
 ) =>
   useQuery({

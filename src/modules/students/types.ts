@@ -36,11 +36,3 @@ export interface StudentOutput {
   classId: string | null;
   className: string | null;
 }
-
-export type FindListStudentsParams = {
-  page?: number;
-  limit?: number;
-  classId?: string;
-  search?: string;
-  active?: boolean;
-};
