@@ -27,7 +27,7 @@ As diferenças que a 16 impôs estão registradas no [§12](#12-registro-de-exec
 | 1 — BFF, camada de API e contratos | ✅     |
 | 2 — Autenticação e autorização     | ✅     |
 | 3 — Design system e shell          | ✅     |
-| 4 — Feed e postagens               | ⬜     |
+| 4 — Feed e postagens               | ✅     |
 | 5 — Agenda do aluno                | ⬜     |
 | 6 — Turmas, alunos e matrículas    | ⬜     |
 | 7 — Pessoas, papéis e usuários     | ⬜     |
@@ -541,7 +541,7 @@ disponível só fora de produção.
 **3.5** Tema claro/escuro por cookie (sem flash) e `prefers-reduced-motion`.
 **3.6** `loading.tsx` com skeleton em cada segmento de rota; `error.tsx` e `global-error.tsx`.
 
-### Fase 4 — Feed e postagens ⬜
+### Fase 4 — Feed e postagens ✅
 
 `GET|POST /posts` · `GET|PATCH|DELETE /posts/:postId` · `POST /posts/:postId/publication` ·
 `GET|POST /posts/:postId/comments` · `DELETE /posts/:postId/comments/:commentId` ·
@@ -1161,3 +1161,84 @@ HTML do servidor.
   morar em algum lugar que não seja copiado em cada formulário.
 - **`<img>` no `Gallery` e no `Avatar`**, com `eslint-disable` da regra do Next: é a §3.6 — o
   otimizador buscaria a imagem sem o cookie do usuário e levaria 401.
+
+### Fase 4 — Feed e postagens ✅ (31/08/2026)
+
+**Entregue.** `modules/posts/` completo: `types.ts` espelhando `PostOutput`, `CommentOutput`,
+`MediaOutput` e `ReactionSummaryOutput`; schemas Zod com os quatro `refine` cruzados de
+audiência; um arquivo por endpoint em `api/` (5 de servidor, 9 de cliente); e os componentes
+`PostCard`, `PostMetaRow`, `FeedFilters`, `ReactionBar`, `CommentSection`,
+`RemoveCommentDialog`, `MediaManager`, `AudiencePicker`, `PostComposer` e `PostActions`. As
+rotas `/feed`, `/feed/nova` e `/feed/[postId]`, com `loading.tsx` em cada uma. Mais os clientes
+mínimos de `classes` e `students` que o composer precisa (as telas deles são das Fases 6 e 7).
+
+**Verificação.** `npm run lint` e `npm run build` limpos. Contra a API real, o ciclo do passo
+4.7 inteiro:
+
+| Passo                                             | Resultado                                                   |
+| ------------------------------------------------- | ----------------------------------------------------------- |
+| Criar rascunho (`POST /posts`)                    | `201`, `publishedAt: null`                                  |
+| Rascunho no feed                                  | aparece só em `?status=RASCUNHO`, e só para quem publica    |
+| Anexar imagem (`multipart`)                       | `201`                                                       |
+| Publicar (`POST /posts/:id/publication`)          | `publishedAt` preenchido, 1 mídia                           |
+| A família passa a ver                             | a postagem entra no feed do responsável                     |
+| Reação `PUT` JOINHA → CORACAO                     | `total` continua 1, `mine` troca — upsert, não recurso novo |
+| Reação `DELETE`                                   | `204`                                                       |
+| Autor removendo o próprio comentário sem motivo   | `204`                                                       |
+| Escola removendo comentário alheio **sem** motivo | `422` — "A remoção pela escola exige o motivo"              |
+| Escola removendo **com** motivo                   | `204`, motivo preservado na lápide                          |
+
+O isolamento entre famílias é o que sustenta o capítulo de resultados: **Bruno vê 4 postagens,
+Gabriel vê 2**. As duas que faltam a Gabriel são as endereçadas ao Théo — os dois são pais de
+crianças da **mesma** turma, e a postagem por aluno não vaza para o outro responsável. A
+página de detalhe renderiza título, corpo, galeria, barra de reação e as duas lápides
+(`Removido pelo autor` e `Removido pela escola`, esta com o motivo). A postagem de teste foi
+removida ao fim: o feed voltou exatamente ao estado do seed.
+
+**Divergências encontradas.**
+
+1. **`GET /classes` estava quebrado na API.** `classes.routes.ts` tinha o
+   `findListClassConsentsValidator` sobrando na rota de **listagem**, exigindo um `classId` que
+   aquela rota não tem — toda chamada devolvia `400`. Uma linha a menos resolveu. Sem isso nem
+   o filtro de turma do feed nem o seletor do composer sairiam do lugar. Segunda alteração
+   feita em `../zelo`.
+2. **`redirect()` sob layout assíncrono vira `<meta http-equiv="refresh">`.** É o mesmo
+   mecanismo do `notFound()` da Fase 3: o shell do `(app)/layout.tsx` já começou a streamar, o
+   status não muda mais, e o Next degrada para um refresh de 1 segundo embutido no HTML. O
+   redirecionamento por perfil da §4.5 foi **revertido**: `/` segue como a home de atalhos.
+   Para virar um `307` de verdade teria de sair de `next.config.ts` (`redirects()`), e aí quem
+   não tem `VIEW:POST` cairia em `/403` em vez de numa tela acolhedora — troca ruim.
+3. **`PostOutput` não tem `status`.** Rascunho é `publishedAt === null`, e daí o helper
+   `isDraft`. O `status` só existe como filtro de query.
+4. **`GET /posts` não traz contagem de reação nem de comentário.** Para o cartão do feed
+   mostrar a barra de reação, cada cartão busca o próprio resumo — **N requisições por página**.
+   No detalhe isso não acontece: o servidor já traz resumo e catálogo e os passa como
+   `initialData`, e a barra sai renderizada no HTML. É o candidato mais claro a melhoria na
+   API: `reactionCount`, `commentCount` e `myReaction` no item da lista resolveriam de uma vez.
+   Anotado como `TODO(api)`.
+
+**Decisões registradas.**
+
+- **O composer salva a cada passo.** `POST /posts` no primeiro, `PATCH` nos seguintes. A aba de
+  mídia só existe depois que o rascunho tem id — não há onde pendurar imagem antes disso.
+  Publicar é ação separada, com `AlertDialog`, como manda o princípio 6 da §4.1.
+- **O diálogo de remoção de comentário pede motivo só para quem não é o autor**, espelhando a
+  regra que o back cobra com 422. Comentário removido nunca some: vira lápide com quem removeu
+  e, quando é a escola, o motivo.
+- **Reação é a única mutação otimista.** O custo do erro é zero e o rollback é local; o resto
+  espera a resposta, como a §5 estabeleceu.
+- **Filtro e paginação vivem em `searchParams`.** O feed é Server Component e re-renderiza pela
+  URL; só o `FeedFilters` é cliente, e ele só empurra a URL.
+- **O filtro de aluno não filtra nada no cliente.** `GET /students` já devolve só quem o ator
+  alcança — para o responsável, os próprios filhos, pelo vínculo, dentro do SQL. Verificado:
+  Bruno recebe `['Théo']`, Gabriel recebe `['Helena']`, Ana (professora da turma) recebe os
+  dois. Filtrar no front seria pior que inútil: significaria que a API mandou as outras
+  crianças antes.
+- **O responsável não tem o caminho do CPF, e a UI não o oferece.** `VIEW:GUARDIAN` e
+  `VIEW:GUARDIAN_LINK` são de professor, coordenação e administrador; Bruno chamando
+  `/guardians` ou `/guardian-links` leva `403` (conferido). O seletor de aluno é o único
+  caminho, e ele é alimentado pela abrangência do próprio ator.
+- **O filtro de aluno só aparece quando há o que escolher.** A lista vem semeada do servidor
+  (`findListStudents` no `page.tsx`), então a decisão de mostrar ou esconder é tomada com dado
+  real, no HTML — sem o piscar de renderizar o filtro e escondê-lo depois da hidratação. Com um
+  aluno alcançado, o controle não existe; com dois ou mais, ele aparece.
