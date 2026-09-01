@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import { Avatar } from '@/shared/components/avatar';
 import { Card, CardContent } from '@/shared/components/card';
-import type { PostOutput } from '../types';
+import type { Collection } from '@/shared/api/types';
+import type { PostOutput, ReactionTypeOutput } from '../types';
 import { mediaUrl } from '../types';
-import { PostMetaRow } from './post-meta';
-import { ReactionBar } from './reaction-bar';
+import { CommentCount, PostMetaRow } from './post-meta';
+import { PostReactions } from './post-reactions';
 
 const EXCERPT_LENGTH = 240;
 
@@ -14,7 +15,13 @@ const excerpt = (body: string | null): string | null => {
   return body.length > EXCERPT_LENGTH ? `${body.slice(0, EXCERPT_LENGTH).trimEnd()}…` : body;
 };
 
-export function PostCard({ post }: { post: PostOutput }) {
+export function PostCard({
+  post,
+  reactionTypes,
+}: {
+  post: PostOutput;
+  reactionTypes: Collection<ReactionTypeOutput>;
+}) {
   const preview = excerpt(post.body);
   const thumbnails = post.media.slice(0, 3);
 
@@ -57,9 +64,18 @@ export function PostCard({ post }: { post: PostOutput }) {
           </p>
         )}
 
-        {/* TODO(api): `GET /posts` não traz contagem de reação — cada cartão busca a sua.
-            Um `reactionCount`/`myReaction` no item da lista mataria o N+1. */}
-        <ReactionBar postId={post.id} />
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <PostReactions
+            postId={post.id}
+            myReaction={post.myReaction}
+            reactionCount={post.reactionCount}
+            types={reactionTypes}
+          />
+
+          <Link href={`/feed/${post.id}`} className="flex items-center">
+            <CommentCount count={post.commentCount} />
+          </Link>
+        </div>
       </CardContent>
     </Card>
   );

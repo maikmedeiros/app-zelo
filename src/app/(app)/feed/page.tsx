@@ -11,6 +11,7 @@ import { PageHeader } from '@/shared/components/page-header';
 import { Pagination } from '@/shared/components/pagination';
 import { findListPosts } from '@/modules/posts/api/find-list-posts';
 import { findListStudents } from '@/modules/students/api/find-list-students';
+import { findListReactionTypes } from '@/modules/reaction-types/api/find-list-reaction-types';
 import { FeedFilters } from '@/modules/posts/components/feed-filters';
 import { PostCard } from '@/modules/posts/components/post-card';
 import { parseFeedSearchParams } from '@/modules/posts/schemas/find-list-posts';
@@ -22,9 +23,10 @@ export default async function FeedPage({ searchParams }: PageProps<'/feed'>) {
   const session = await getCurrentSession();
   const canCreate = hasCapability(session, Feature.PostCreate);
 
-  const [posts, students] = await Promise.all([
+  const [posts, students, reactionTypes] = await Promise.all([
     findListPosts(params),
     findListStudents({ limit: 20, active: true }),
+    findListReactionTypes(),
   ]);
 
   return (
@@ -62,7 +64,7 @@ export default async function FeedPage({ searchParams }: PageProps<'/feed'>) {
           <ul className="flex flex-col gap-4">
             {posts.results.map((post) => (
               <li key={post.id}>
-                <PostCard post={post} />
+                <PostCard post={post} reactionTypes={reactionTypes} />
               </li>
             ))}
           </ul>

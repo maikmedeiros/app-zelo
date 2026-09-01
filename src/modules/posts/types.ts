@@ -44,6 +44,9 @@ export interface PostOutput {
   referenceDate: string;
   publishedAt: string | null;
   media: PostMedia[];
+  commentCount: number;
+  reactionCount: number;
+  myReaction: string | null;
 }
 
 export interface MediaOutput {
