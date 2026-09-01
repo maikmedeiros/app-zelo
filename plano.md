@@ -28,7 +28,7 @@ As diferenças que a 16 impôs estão registradas no [§12](#12-registro-de-exec
 | 2 — Autenticação e autorização     | ✅     |
 | 3 — Design system e shell          | ✅     |
 | 4 — Feed e postagens               | ✅     |
-| 5 — Agenda do aluno                | ⬜     |
+| 5 — Agenda do aluno                | ✅     |
 | 6 — Turmas, alunos e matrículas    | ⬜     |
 | 7 — Pessoas, papéis e usuários     | ⬜     |
 | 8 — Vínculos e acessos             | ⬜     |
@@ -565,7 +565,7 @@ Atualização otimista, com `mine` do resumo marcando a escolha do ator.
 **4.7** **Verificação:** o ciclo completo como professor (criar → mídia → publicar) e a leitura
 como responsável, confirmando que a família só enxerga a turma do filho.
 
-### Fase 5 — Agenda do aluno ⬜
+### Fase 5 — Agenda do aluno ✅
 
 `GET|POST /students/:studentId/journal` · `PATCH|DELETE /students/:studentId/journal/:entryId`
 
@@ -1242,3 +1242,61 @@ removida ao fim: o feed voltou exatamente ao estado do seed.
   (`findListStudents` no `page.tsx`), então a decisão de mostrar ou esconder é tomada com dado
   real, no HTML — sem o piscar de renderizar o filtro e escondê-lo depois da hidratação. Com um
   aluno alcançado, o controle não existe; com dois ou mais, ele aparece.
+
+### Fase 5 — Agenda do aluno ✅ (31/08/2026)
+
+**Entregue.** `modules/students/` ganhou o lado da agenda: os tipos de `JournalEntryOutput`, os
+schemas de criação, edição e remoção, os quatro endpoints (`find-list-journal-entries` de
+servidor; criar, editar e remover de cliente) e os componentes `JournalTimeline`,
+`JournalEntryCard`, `JournalComposer`, `JournalDatePicker`, `EditEntryDialog` e
+`RemoveEntryDialog`. A rota `/students/[studentId]/journal`, com `loading.tsx`, filtro de dia
+em `?date=` e navegação de dia anterior / próximo dia.
+
+Junto, e fora do escopo da fase: o **débito da Fase 4 foi liquidado**. Com `commentCount`,
+`reactionCount` e `myReaction` chegando em `GET /posts`, o cartão do feed deixou de buscar o
+próprio resumo. O `PostReactions` do cartão não faz **nenhuma** requisição para renderizar —
+emoji, contagem e a reação do próprio ator saem do item da lista, e o catálogo vem semeado uma
+vez por página. O `ReactionBar` completo, com as contagens por tipo, continua só no detalhe.
+
+**Verificação.** `npm run lint` e `npm run build` limpos. O ciclo do passo 5.4 contra a API
+real: a professora escreve, o responsável responde com `repliesToId`, e **os dois veem o mesmo
+fio** — a resposta indentada sob a entrada original. Editar devolve `editedAt` preenchido e a
+tela mostra "editado". O dia sem registro mostra "Nada registrado neste dia". As lápides
+aparecem nas duas formas, e a da escola carrega o motivo.
+
+O isolamento se mantém: **Gabriel leva `404` na agenda do Théo** — os dois são responsáveis de
+crianças da mesma turma, e o vínculo é por criança, não por turma.
+
+**Divergências encontradas.**
+
+1. **O responsável não pode remover o próprio registro da agenda — e a UI oferecia o botão.**
+   `RESPONSAVEL` tem `CREATE:JOURNAL:TURMA` e `VIEW:JOURNAL:TURMA`, e nada de `DELETE`. O
+   guard estava escrito como `isAuthor || canDelete`, que é a intuição errada: ser autor não é
+   permissão. Bruno clicava e levava `403` — exatamente o que a §3.5 diz que o guard existe
+   para evitar. Corrigido: quem decide é a **abrangência**.
+
+   ```
+   PROPRIA  → só as próprias entradas
+   TURMA    → qualquer entrada que o ator alcança
+   ESCOLA   → idem
+   nenhuma  → o botão não existe
+   ```
+
+   Conferido depois do ajuste, na mesma entrada: Ana (autora, `UPDATE`/`DELETE:JOURNAL:PROPRIA`)
+   recebe editar, remover e responder; Bruno recebe só responder. Diana, com
+   `DELETE:JOURNAL:TURMA`, remove entrada alheia — foi ela quem limpou a resposta do Bruno ao
+   fim do teste.
+
+**Decisões registradas.**
+
+- **A árvore de respostas tem um nível só.** `repliesToId` aponta para a entrada raiz, e uma
+  resposta não ganha botão de responder. Encadear resposta de resposta viraria fórum; o modelo
+  aqui é escola escreve, família responde.
+- **Resposta órfã não some.** Se o pai da resposta não estiver na página atual (paginação ou
+  filtro de dia), a entrada é promovida a raiz em vez de desaparecer. Sumir com o texto de
+  alguém por acidente de paginação seria pior que mostrá-lo fora do lugar.
+- **O motivo da remoção é opcional aqui**, ao contrário do comentário da §4.5 — é o que o back
+  cobra (`reason` opcional no `deleteJournalEntrySchema`), e o front não inventa regra que a
+  API não tem.
+- **A data vive em `?date=`**, com as setas de dia empurrando a URL. Mesma régua do feed: a
+  tela sobrevive ao refresh e ao link compartilhado.
