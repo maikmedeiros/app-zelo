@@ -9,12 +9,12 @@ import {
   AlertDialogContent,
   AlertDialogTrigger,
 } from '@/shared/components/alert-dialog';
+import { Avatar } from '@/shared/components/avatar';
 import { Button } from '@/shared/components/button';
 import { FileDropzone } from '@/shared/components/file-dropzone';
 import { useApiAction } from '@/shared/hooks/use-api-action';
 import { deletePhoto } from '../api/delete-photo.client';
 import { updatePhoto } from '../api/update-photo.client';
-import { photoUrl } from '../types';
 import { SquareCropper, type CropFn } from './square-cropper';
 
 export interface PhotoManagerProps {
@@ -27,7 +27,6 @@ export function PhotoManager({ personId, personName, hasPhoto }: PhotoManagerPro
   const { run, pending } = useApiAction();
   const canUpdate = useCan(Feature.PhotoUpdate);
   const [chosen, setChosen] = useState<File | null>(null);
-  const [broken, setBroken] = useState(false);
   const cropRef = useRef<CropFn | null>(null);
 
   const send = async () => {
@@ -39,10 +38,7 @@ export function PhotoManager({ personId, personName, hasPhoto }: PhotoManagerPro
     await run(() => updatePhoto(personId, file), {
       success: 'Foto atualizada',
       failure: 'Não foi possível enviar a foto',
-      onSuccess: () => {
-        setBroken(false);
-        setChosen(null);
-      },
+      onSuccess: () => setChosen(null),
     });
   };
 
@@ -50,26 +46,20 @@ export function PhotoManager({ personId, personName, hasPhoto }: PhotoManagerPro
     <div className="flex flex-col items-center gap-4">
       {chosen === null ? (
         <>
-          {hasPhoto && !broken ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={photoUrl(personId)}
-              alt={`Foto de ${personName}`}
-              width={160}
-              height={160}
-              loading="lazy"
-              onError={() => setBroken(true)}
-              className="size-40 rounded-full border border-border object-cover"
-            />
-          ) : (
-            <p className="text-text-muted">Sem foto no cadastro.</p>
-          )}
+          <Avatar
+            name={personName}
+            personId={hasPhoto ? personId : undefined}
+            size="lg"
+            className="size-40 border border-border text-3xl"
+          />
+
+          {!hasPhoto && <p className="text-text-muted">Sem foto no cadastro.</p>}
 
           {canUpdate && (
             <>
               <FileDropzone onFiles={(files) => setChosen(files[0] ?? null)} className="w-full" />
 
-              {hasPhoto && !broken && (
+              {hasPhoto && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="secondary" size="sm" disabled={pending}>

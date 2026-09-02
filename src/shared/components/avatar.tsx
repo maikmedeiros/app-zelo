@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 import { cn } from '@/shared/utils/cn';
 
 const SIZES = {
@@ -6,8 +5,6 @@ const SIZES = {
   md: 'size-10 text-sm',
   lg: 'size-16 text-lg',
 } as const;
-
-const PIXELS = { sm: 32, md: 40, lg: 64 } as const;
 
 export type AvatarSize = keyof typeof SIZES;
 
@@ -41,14 +38,12 @@ export function Avatar({ name, personId, size = 'md', className }: AvatarProps) 
       </span>
 
       {personId !== undefined && (
-        <img
-          src={`/api/v1/people/${personId}/photo`}
-          alt=""
-          width={PIXELS[size]}
-          height={PIXELS[size]}
-          loading="lazy"
-          decoding="async"
-          className="absolute inset-0 size-full object-cover"
+        <span
+          aria-hidden
+          style={{
+            backgroundImage: `url("/api/v1/people/${encodeURIComponent(personId)}/photo")`,
+          }}
+          className="absolute inset-0 bg-cover bg-center"
         />
       )}
 
