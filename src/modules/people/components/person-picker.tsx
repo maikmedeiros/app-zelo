@@ -1,16 +1,30 @@
 'use client';
 
 import { useState } from 'react';
-import { Combobox } from '@/shared/components/combobox';
+import { Combobox, type ComboboxOption } from '@/shared/components/combobox';
+import { formatCpf } from '@/shared/utils/cpf';
 import { formatDate } from '@/shared/utils/date';
 import { useFindListPeople } from '../api/find-list-people.client';
-import type { PersonRole } from '../types';
+import { displayName, type PersonOutput, type PersonRoleFilter } from '../types';
+
+const hintFor = (person: PersonOutput): string | undefined => {
+  if (person.cpf !== null) return formatCpf(person.cpf);
+  if (person.birthDate !== null) return `Nascimento ${formatDate(person.birthDate)}`;
+
+  return undefined;
+};
+
+const toOption = (person: PersonOutput): ComboboxOption => ({
+  value: person.id,
+  label: displayName(person),
+  hint: hintFor(person),
+});
 
 export interface PersonPickerProps {
   id: string;
   value: string | null;
   onChange: (personId: string | null) => void;
-  role?: PersonRole | 'none';
+  role?: PersonRoleFilter;
   placeholder?: string;
   invalid?: boolean;
 }
@@ -32,12 +46,6 @@ export function PersonPicker({
     ...(term.length >= 2 ? { search: term } : {}),
   });
 
-  const options = (people.data?.results ?? []).map((person) => ({
-    value: person.id,
-    label: person.socialName ?? person.name,
-    hint: person.birthDate === null ? undefined : `Nascimento ${formatDate(person.birthDate)}`,
-  }));
-
   return (
     <Combobox
       id={id}
@@ -47,7 +55,7 @@ export function PersonPicker({
       loading={people.isFetching}
       placeholder={placeholder}
       invalid={invalid}
-      options={options}
+      options={(people.data?.results ?? []).map(toOption)}
     />
   );
 }
