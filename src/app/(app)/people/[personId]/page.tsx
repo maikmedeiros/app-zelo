@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { cache } from 'react';
 import { Feature } from '@/config/features';
 import { orNotFound } from '@/shared/api/not-found';
 import { requireCapability } from '@/shared/auth/require-capability';
@@ -15,7 +16,16 @@ import { PersonRolesCard } from '@/modules/people/components/person-roles-card';
 import { PhotoManager } from '@/modules/people/components/photo-manager';
 import { displayName } from '@/modules/people/types';
 
-export const metadata: Metadata = { title: 'Pessoa' };
+const getPersonById = cache((id: string) => orNotFound(findPersonById(id)));
+
+export const generateMetadata = async ({
+  params,
+}: PageProps<'/people/[personId]'>): Promise<Metadata> => {
+  const { personId } = await params;
+  const person = await getPersonById(personId);
+
+  return { title: person.name };
+};
 
 function DataRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -30,7 +40,7 @@ export default async function PersonPage({ params }: PageProps<'/people/[personI
   const { personId } = await params;
 
   await requireCapability(Feature.PersonView);
-  const person = await orNotFound(findPersonById(personId));
+  const person = await getPersonById(personId);
 
   const age = person.birthDate === null ? null : formatAge(person.birthDate);
 

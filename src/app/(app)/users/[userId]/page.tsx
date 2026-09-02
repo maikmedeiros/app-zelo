@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { cache } from 'react';
 import Link from 'next/link';
 import { Feature } from '@/config/features';
 import { orNotFound } from '@/shared/api/not-found';
@@ -11,7 +12,16 @@ import { PageHeader } from '@/shared/components/page-header';
 import { findUserById } from '@/modules/users/api/find-user-by-id';
 import { UserActions } from '@/modules/users/components/user-actions';
 
-export const metadata: Metadata = { title: 'Conta de acesso' };
+const getUserById = cache((id: string) => orNotFound(findUserById(id)));
+
+export const generateMetadata = async ({
+  params,
+}: PageProps<'/users/[userId]'>): Promise<Metadata> => {
+  const { userId } = await params;
+  const user = await getUserById(userId);
+
+  return { title: user.personName };
+};
 
 const lastAccess = (iso: string | null): string =>
   iso === null
@@ -22,7 +32,7 @@ export default async function UserPage({ params }: PageProps<'/users/[userId]'>)
   const { userId } = await params;
 
   const session = await requireCapability(Feature.UserView);
-  const user = await orNotFound(findUserById(userId));
+  const user = await getUserById(userId);
 
   const canSeePerson = hasCapability(session, Feature.PersonView);
 

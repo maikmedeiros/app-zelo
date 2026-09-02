@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { cache } from 'react';
 import Link from 'next/link';
 import { Feature } from '@/config/features';
 import { orNotFound } from '@/shared/api/not-found';
@@ -12,13 +13,22 @@ import { formatCpf } from '@/shared/utils/cpf';
 import { findTeacherById } from '@/modules/teachers/api/find-teacher-by-id';
 import { EditTeacherButton } from '@/modules/teachers/components/teacher-buttons';
 
-export const metadata: Metadata = { title: 'Professor' };
+const getTeacherById = cache((id: string) => orNotFound(findTeacherById(id)));
+
+export const generateMetadata = async ({
+  params,
+}: PageProps<'/teachers/[teacherId]'>): Promise<Metadata> => {
+  const { teacherId } = await params;
+  const teacher = await getTeacherById(teacherId);
+
+  return { title: teacher.personName };
+};
 
 export default async function TeacherPage({ params }: PageProps<'/teachers/[teacherId]'>) {
   const { teacherId } = await params;
 
   const session = await requireCapability(Feature.TeacherView);
-  const teacher = await orNotFound(findTeacherById(teacherId));
+  const teacher = await getTeacherById(teacherId);
 
   const canUpdate = hasCapability(session, Feature.TeacherUpdate);
   const canSeePerson = hasCapability(session, Feature.PersonView);

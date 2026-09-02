@@ -1,12 +1,20 @@
 import type { Metadata } from 'next';
 import { Feature } from '@/config/features';
+import { getClassById } from '@/modules/classes/api/get-class-by-id';
 import { hasCapability } from '@/shared/auth/capabilities';
 import { requireCapability } from '@/shared/auth/require-capability';
 import { findListTeacherLinks } from '@/modules/teacher-links/api/find-list-teacher-links';
 import { NewTeacherLinkButton } from '@/modules/teacher-links/components/new-teacher-link-button';
 import { TeacherLinkTable } from '@/modules/teacher-links/components/teacher-link-table';
 
-export const metadata: Metadata = { title: 'Professores da turma' };
+export const generateMetadata = async ({
+  params,
+}: PageProps<'/classes/[classId]/teachers'>): Promise<Metadata> => {
+  const { classId } = await params;
+  const turma = await getClassById(classId);
+
+  return { title: `Professores · ${turma.name}` };
+};
 
 export default async function ClassTeachersPage({
   params,

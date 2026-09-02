@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { cache } from 'react';
 import { Feature } from '@/config/features';
 import { orNotFound } from '@/shared/api/not-found';
 import { parseSearchParams } from '@/shared/api/search-params';
@@ -14,7 +15,16 @@ import { ConsentSummary } from '@/modules/students/components/consent-summary';
 import { NewConsentButton } from '@/modules/students/components/new-consent-button';
 import { findListConsentsSchema } from '@/modules/students/schemas/consents';
 
-export const metadata: Metadata = { title: 'Consentimentos' };
+const getStudentById = cache((id: string) => orNotFound(findStudentById(id)));
+
+export const generateMetadata = async ({
+  params,
+}: PageProps<'/students/[studentId]/consents'>): Promise<Metadata> => {
+  const { studentId } = await params;
+  const student = await getStudentById(studentId);
+
+  return { title: `Consentimentos de ${student.personName}` };
+};
 
 export default async function StudentConsentsPage({
   params,
@@ -25,7 +35,7 @@ export default async function StudentConsentsPage({
   const session = await requireCapability(Feature.ConsentView);
 
   const [student, current, history] = await Promise.all([
-    orNotFound(findStudentById(studentId)),
+    getStudentById(studentId),
     orNotFound(findListConsents(studentId, { current: true, limit: 100 })),
     orNotFound(findListConsents(studentId, filters)),
   ]);

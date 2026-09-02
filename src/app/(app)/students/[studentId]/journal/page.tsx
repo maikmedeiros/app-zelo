@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { cache } from 'react';
 import { Feature } from '@/config/features';
 import { orNotFound } from '@/shared/api/not-found';
 import { requireCapability } from '@/shared/auth/require-capability';
@@ -11,7 +12,16 @@ import { findStudentById } from '@/modules/students/api/find-student-by-id';
 import { JournalDatePicker } from '@/modules/students/components/journal-date-picker';
 import { JournalTimeline } from '@/modules/students/components/journal-timeline';
 
-export const metadata: Metadata = { title: 'Agenda' };
+const getStudentById = cache((id: string) => orNotFound(findStudentById(id)));
+
+export const generateMetadata = async ({
+  params,
+}: PageProps<'/students/[studentId]/journal'>): Promise<Metadata> => {
+  const { studentId } = await params;
+  const student = await getStudentById(studentId);
+
+  return { title: `Agenda de ${student.personName}` };
+};
 
 const isIsoDate = (value: unknown): value is string =>
   typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -29,7 +39,7 @@ export default async function JournalPage({
   await requireCapability(Feature.JournalView);
 
   const [student, entries] = await Promise.all([
-    orNotFound(findStudentById(studentId)),
+    getStudentById(studentId),
     findListJournalEntries(studentId, { date: referenceDate, page: currentPage }),
   ]);
 

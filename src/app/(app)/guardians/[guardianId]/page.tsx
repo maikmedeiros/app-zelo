@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { cache } from 'react';
 import Link from 'next/link';
 import { Feature } from '@/config/features';
 import { orNotFound } from '@/shared/api/not-found';
@@ -13,13 +14,22 @@ import { formatPhone } from '@/shared/utils/phone';
 import { findGuardianById } from '@/modules/guardians/api/find-guardian-by-id';
 import { NotificationPreferences } from '@/modules/guardians/components/notification-preferences';
 
-export const metadata: Metadata = { title: 'Responsável' };
+const getGuardianById = cache((id: string) => orNotFound(findGuardianById(id)));
+
+export const generateMetadata = async ({
+  params,
+}: PageProps<'/guardians/[guardianId]'>): Promise<Metadata> => {
+  const { guardianId } = await params;
+  const guardian = await getGuardianById(guardianId);
+
+  return { title: guardian.personName };
+};
 
 export default async function GuardianPage({ params }: PageProps<'/guardians/[guardianId]'>) {
   const { guardianId } = await params;
 
   const session = await requireCapability(Feature.GuardianView);
-  const guardian = await orNotFound(findGuardianById(guardianId));
+  const guardian = await getGuardianById(guardianId);
 
   const canSeePerson = hasCapability(session, Feature.PersonView);
 

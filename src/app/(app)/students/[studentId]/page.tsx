@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { cache } from 'react';
 import Link from 'next/link';
 import { CalendarDays, ShieldCheck } from 'lucide-react';
 import { Feature } from '@/config/features';
@@ -23,7 +24,16 @@ import { StudentActions } from '@/modules/students/components/student-actions';
 import { CONSENT_TYPES } from '@/modules/students/types';
 import { isCurrent } from '@/modules/enrollments/types';
 
-export const metadata: Metadata = { title: 'Aluno' };
+const getStudentById = cache((id: string) => orNotFound(findStudentById(id)));
+
+export const generateMetadata = async ({
+  params,
+}: PageProps<'/students/[studentId]'>): Promise<Metadata> => {
+  const { studentId } = await params;
+  const student = await getStudentById(studentId);
+
+  return { title: student.personName };
+};
 
 function DataRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -43,7 +53,7 @@ export default async function StudentPage({ params }: PageProps<'/students/[stud
   const canSeeConsents = hasCapability(session, Feature.ConsentView);
 
   const [student, guardianLinks, enrollments, consents] = await Promise.all([
-    orNotFound(findStudentById(studentId)),
+    getStudentById(studentId),
     canSeeGuardians ? findListGuardianLinks({ studentId, limit: 100 }) : null,
     canSeeEnrollments ? findListEnrollments({ studentId, limit: 100 }) : null,
     canSeeConsents ? orNull(findListConsents(studentId, { current: true, limit: 100 })) : null,

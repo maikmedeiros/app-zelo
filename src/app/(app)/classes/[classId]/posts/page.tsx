@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Feature } from '@/config/features';
+import { getClassById } from '@/modules/classes/api/get-class-by-id';
 import { requireCapability } from '@/shared/auth/require-capability';
 import { EmptyState } from '@/shared/components/empty-state';
 import { Pagination } from '@/shared/components/pagination';
@@ -8,7 +9,14 @@ import { findListReactionTypes } from '@/modules/reaction-types/api/find-list-re
 import { PostCard } from '@/modules/posts/components/post-card';
 import { parseFeedSearchParams } from '@/modules/posts/schemas/find-list-posts';
 
-export const metadata: Metadata = { title: 'Postagens da turma' };
+export const generateMetadata = async ({
+  params,
+}: PageProps<'/classes/[classId]/posts'>): Promise<Metadata> => {
+  const { classId } = await params;
+  const turma = await getClassById(classId);
+
+  return { title: `Postagens · ${turma.name}` };
+};
 
 export default async function ClassPostsPage({
   params,

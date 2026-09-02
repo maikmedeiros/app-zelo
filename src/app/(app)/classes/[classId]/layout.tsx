@@ -1,11 +1,10 @@
 import { Feature } from '@/config/features';
-import { orNotFound } from '@/shared/api/not-found';
 import { requireCapability } from '@/shared/auth/require-capability';
 import { Badge } from '@/shared/components/badge';
 import { Breadcrumbs } from '@/shared/components/breadcrumbs';
 import { PageHeader } from '@/shared/components/page-header';
 import { ptBR } from '@/shared/i18n/pt-BR';
-import { findClassById } from '@/modules/classes/api/find-class-by-id';
+import { getClassById } from '@/modules/classes/api/get-class-by-id';
 import { ClassActions } from '@/modules/classes/components/class-actions';
 import { ClassTabs } from '@/modules/classes/components/class-tabs';
 
@@ -13,7 +12,7 @@ export default async function ClassLayout({ params, children }: LayoutProps<'/cl
   const { classId } = await params;
 
   await requireCapability(Feature.ClassView);
-  const turma = await orNotFound(findClassById(classId));
+  const turma = await getClassById(classId);
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { cache } from 'react';
 import { Feature } from '@/config/features';
 import { orNotFound } from '@/shared/api/not-found';
 import { requireCapability } from '@/shared/auth/require-capability';
@@ -7,13 +8,22 @@ import { PageHeader } from '@/shared/components/page-header';
 import { findRoleById } from '@/modules/roles/api/find-role-by-id';
 import { RoleEditor } from '@/modules/roles/components/role-editor';
 
-export const metadata: Metadata = { title: 'Perfil' };
+const getRoleById = cache((id: string) => orNotFound(findRoleById(id)));
+
+export const generateMetadata = async ({
+  params,
+}: PageProps<'/roles/[roleId]'>): Promise<Metadata> => {
+  const { roleId } = await params;
+  const role = await getRoleById(roleId);
+
+  return { title: role.name };
+};
 
 export default async function RolePage({ params }: PageProps<'/roles/[roleId]'>) {
   const { roleId } = await params;
   await requireCapability(Feature.RoleView);
 
-  const role = await orNotFound(findRoleById(roleId));
+  const role = await getRoleById(roleId);
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">

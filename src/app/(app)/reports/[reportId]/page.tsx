@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { cache } from 'react';
 import { Feature } from '@/config/features';
 import { orNotFound } from '@/shared/api/not-found';
 import { hasCapability } from '@/shared/auth/capabilities';
@@ -14,13 +15,22 @@ import { ReportStatusBadge } from '@/modules/reports/components/report-status-ba
 import { formatDate } from '@/shared/utils/date';
 import { isPublished } from '@/modules/reports/types';
 
-export const metadata: Metadata = { title: 'Relatório' };
+const getReportById = cache((id: string) => orNotFound(findReportById(id)));
+
+export const generateMetadata = async ({
+  params,
+}: PageProps<'/reports/[reportId]'>): Promise<Metadata> => {
+  const { reportId } = await params;
+  const report = await getReportById(reportId);
+
+  return { title: `Relatório de ${report.studentName}` };
+};
 
 export default async function ReportPage({ params }: PageProps<'/reports/[reportId]'>) {
   const { reportId } = await params;
   const session = await requireCapability(Feature.ReportView);
 
-  const report = await orNotFound(findReportById(reportId));
+  const report = await getReportById(reportId);
 
   const editable = !isPublished(report) && hasCapability(session, Feature.ReportUpdate);
 

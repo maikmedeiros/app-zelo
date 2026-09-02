@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Feature } from '@/config/features';
+import { getClassById } from '@/modules/classes/api/get-class-by-id';
 import { orNotFound } from '@/shared/api/not-found';
 import { requireCapability } from '@/shared/auth/require-capability';
 import { consentStateOf } from '@/shared/components/consent-badge';
@@ -10,7 +11,14 @@ import { ClassConsentTable } from '@/modules/classes/components/class-consent-ta
 import { CONSENT_TYPES, type ConsentType } from '@/modules/students/types';
 import type { StudentConsentStatusOutput } from '@/modules/classes/types';
 
-export const metadata: Metadata = { title: 'Consentimentos da turma' };
+export const generateMetadata = async ({
+  params,
+}: PageProps<'/classes/[classId]/consents'>): Promise<Metadata> => {
+  const { classId } = await params;
+  const turma = await getClassById(classId);
+
+  return { title: `Consentimentos · ${turma.name}` };
+};
 
 const isConsentType = (value: unknown): value is ConsentType =>
   CONSENT_TYPES.includes(value as ConsentType);

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { cache } from 'react';
 import { Feature } from '@/config/features';
-import { isApiError } from '@/shared/api/errors';
+import { orNotFound } from '@/shared/api/not-found';
 import { requireCapability } from '@/shared/auth/require-capability';
 import { Avatar } from '@/shared/components/avatar';
 import { Breadcrumbs } from '@/shared/components/breadcrumbs';
@@ -18,14 +18,7 @@ import { ReactionBar } from '@/modules/posts/components/reaction-bar';
 import { mediaUrl, type PostOutput } from '@/modules/posts/types';
 import { ptBR } from '@/shared/i18n/pt-BR';
 
-const loadPost = async (postId: string): Promise<PostOutput> => {
-  try {
-    return await findPostById(postId);
-  } catch (error) {
-    if (isApiError(error) && error.statusCode === 404) notFound();
-    throw error;
-  }
-};
+const loadPost = cache((postId: string): Promise<PostOutput> => orNotFound(findPostById(postId)));
 
 export async function generateMetadata({ params }: PageProps<'/feed/[postId]'>): Promise<Metadata> {
   const { postId } = await params;
