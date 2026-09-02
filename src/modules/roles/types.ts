@@ -14,4 +14,5 @@ export interface RoleOutput {
   description: string | null;
   system: boolean;
   permissions: RolePermissionOutput[];
+  userCount: number;
 }
