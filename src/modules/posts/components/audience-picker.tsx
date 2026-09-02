@@ -8,6 +8,7 @@ import { Field } from '@/shared/components/field';
 import { ptBR } from '@/shared/i18n/pt-BR';
 import { useFindListClasses } from '@/modules/classes/api/find-list-classes.client';
 import { useFindListStudents } from '@/modules/students/api/find-list-students.client';
+import { StudentConsentSeal } from '@/modules/students/components/student-consent-seal';
 import type { PostAudience } from '../types';
 
 export interface AudienceValue {
@@ -110,9 +111,9 @@ export function AudiencePicker({
             />
           </Field>
 
-          <ul className="flex flex-wrap gap-2">
+          <ul className="flex flex-col gap-2">
             {value.studentIds.map((id) => (
-              <li key={id}>
+              <li key={id} className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={() =>
@@ -125,10 +126,18 @@ export function AudiencePicker({
                 >
                   {studentName(id)} ×
                 </button>
+
+                <StudentConsentSeal studentId={id} />
               </li>
             ))}
           </ul>
         </div>
+      )}
+
+      {value.audience === 'ALUNO' && value.studentIds.length > 0 && (
+        <p className="text-sm text-text-muted">
+          O selo mostra o que vale hoje. Sem autorização vigente, não publique imagem da criança.
+        </p>
       )}
 
       {error !== undefined && (
