@@ -25,14 +25,22 @@ export interface SquareCropperProps {
 }
 
 export function SquareCropper({ file, viewport = 256, cropRef }: SquareCropperProps) {
-  const [source] = useState(() => URL.createObjectURL(file));
+  const [source, setSource] = useState<string | null>(null);
   const [natural, setNatural] = useState<Point | null>(null);
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState<Point>({ x: 0, y: 0 });
   const imageRef = useRef<HTMLImageElement>(null);
   const dragOrigin = useRef<Point | null>(null);
 
-  useEffect(() => () => URL.revokeObjectURL(source), [source]);
+  // Criar e revogar no mesmo efeito: sob StrictMode o React monta, desmonta e remonta, e o
+  // revoke de um efeito separado matava a URL antes de a imagem carregar.
+  useEffect(() => {
+    const url = URL.createObjectURL(file);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSource(url);
+
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
 
   const baseScale = natural === null ? 1 : viewport / Math.min(natural.x, natural.y);
   const scale = baseScale * zoom;
@@ -129,28 +137,30 @@ export function SquareCropper({ file, viewport = 256, cropRef }: SquareCropperPr
           natural !== null && 'cursor-grab active:cursor-grabbing',
         )}
       >
-        <img
-          ref={imageRef}
-          src={source}
-          alt="Pré-visualização da foto"
-          draggable={false}
-          onLoad={(event) => {
-            const { naturalWidth, naturalHeight } = event.currentTarget;
-            const nextBase = viewport / Math.min(naturalWidth, naturalHeight);
+        {source !== null && (
+          <img
+            ref={imageRef}
+            src={source}
+            alt="Pré-visualização da foto"
+            draggable={false}
+            onLoad={(event) => {
+              const { naturalWidth, naturalHeight } = event.currentTarget;
+              const nextBase = viewport / Math.min(naturalWidth, naturalHeight);
 
-            setNatural({ x: naturalWidth, y: naturalHeight });
-            setOffset({
-              x: (viewport - naturalWidth * nextBase) / 2,
-              y: (viewport - naturalHeight * nextBase) / 2,
-            });
-          }}
-          style={{
-            width: displayed.x,
-            height: displayed.y,
-            transform: `translate(${offset.x}px, ${offset.y}px)`,
-          }}
-          className="max-w-none origin-top-left select-none"
-        />
+              setNatural({ x: naturalWidth, y: naturalHeight });
+              setOffset({
+                x: (viewport - naturalWidth * nextBase) / 2,
+                y: (viewport - naturalHeight * nextBase) / 2,
+              });
+            }}
+            style={{
+              width: displayed.x,
+              height: displayed.y,
+              transform: `translate(${offset.x}px, ${offset.y}px)`,
+            }}
+            className="max-w-none origin-top-left select-none"
+          />
+        )}
       </div>
 
       <label htmlFor="foto-zoom" className="flex w-full max-w-xs items-center gap-3 text-sm">
