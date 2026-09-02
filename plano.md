@@ -1964,10 +1964,14 @@ aplicação inteira. O que o feed acrescenta são primitivos do Radix efetivamen
 `DropdownMenu` no menu da conta, `Toast` — mais o TanStack Query. Nada disso é supérfluo.
 
 O que **foi** cortado: o `Avatar`, componente mais renderizado do sistema, deixou de ser Client
-Component. Ele usava o primitivo do Radix só para o estado de carregamento da imagem; agora são
-as iniciais embaixo e um `<img>` por cima, com `alt=""` — que os navegadores colapsam quando a
-imagem falha. Ganho medido: 1 kB gzip e uma fronteira de cliente a menos em toda tela que mostra
-gente. Pouco no número, correto no princípio.
+Component. Ele usava o primitivo do Radix só para o estado de carregamento da imagem. Ganho
+medido: 1 kB gzip e uma fronteira de cliente a menos em toda tela que mostra gente.
+
+> **Correção de 02/09/2026.** A primeira versão desta troca usava `<img alt="">` por cima das
+> iniciais, na suposição de que o navegador colapsaria a imagem que falha. **Era falso**, e
+> quebrou todo avatar do sistema — ninguém no seed tem foto, a API responde 404 em
+> `/people/:id/photo`, e cada avatar virou ícone de imagem quebrada. Ver o registro de correção
+> abaixo.
 
 Também testado e **revertido**: `optimizePackageImports` para `radix-ui` e `lucide-react` não
 mudou um byte — os hashes de conteúdo dos chunks saíram idênticos, porque o Turbopack já faz
@@ -1976,8 +1980,8 @@ esse tree-shaking. Config morta não fica.
 O achado colateral: `zod` custa **82 kB gzip** e entra em toda tela com formulário — é o que faz
 `/students` pesar mais que o feed. Fica registrado para a Fase 13 decidir.
 
-As imagens: os 8 `<img>` do feed saem com `loading="lazy"` e `width`/`height` declarados, assim
-como galeria, gerenciador de mídia e foto de perfil. O `<img>` do lightbox ganhou dimensões mas
+As imagens: as do feed, da galeria, do gerenciador de mídia e da foto de perfil saem com
+`loading="lazy"` e `width`/`height` declarados. O `<img>` do lightbox ganhou dimensões mas
 **não** ganhou `lazy`: é o conteúdo que o usuário acabou de pedir para ver.
 
 **12.6 — erros por segmento.** `error.tsx` novo em `(app)`, no feed e no relatório, cada um
@@ -2024,3 +2028,52 @@ log do Next; 22 telas com zero violação no axe.
 - **`--border-strong` em vez de escurecer `--border`.** Cartão e campo têm exigências diferentes
   de contraste porque cumprem papéis diferentes. Um token só para os dois obrigaria a escolher
   entre violar o 1.4.11 nos campos e engrossar a borda de todo cartão do sistema.
+
+### Correção — avatar quebrado e recorte de foto em branco (02/09/2026)
+
+Dois defeitos achados **usando o sistema no navegador**, que é justamente o que nenhuma régua
+deste projeto alcança: aqui só existe HTTP.
+
+**1. Avatar virava ícone de imagem quebrada — regressão da Fase 12.** A troca do `Avatar` por
+Server Component apostou que `alt=""` faria o navegador colapsar uma imagem que falha. Não faz:
+`alt=""` tira a imagem da árvore de acessibilidade, não suprime o ícone de quebra. E como
+`width`/`height` estavam declarados, a caixa ainda era reservada — o ícone aparecia em tamanho
+cheio. Medido depois do relato:
+
+```
+GET /api/v1/people/:id/photo   →  404 para as 6 primeiras pessoas do seed
+```
+
+Ninguém no seed tem foto, então **todo** avatar do sistema estava quebrado.
+
+A correção mantém o `Avatar` como Server Component e troca o `<img>` por um `<span>` com
+`background-image` sobreposto às iniciais: fundo que falha não pinta nada, e as iniciais
+continuam à vista. Sem JavaScript, sem ícone de quebra, sem requisição a mais. O preço é o
+`loading="lazy"`, que não existe para background — aceitável em imagem de 32 a 64 px. Conferido
+em 9 telas: 53 avatares, zero imagem quebrada.
+
+O `PhotoManager` passou a usar o mesmo `Avatar` em vez do `<img>` próprio, então a tela de foto
+de perfil também mostra as iniciais de quem ainda não enviou nada — era o que o relato pedia.
+
+**2. O recorte de foto abria em branco — defeito desde a Fase 7.** O `SquareCropper` criava a
+`objectURL` no inicializador do `useState` e a revogava na limpeza de um efeito separado. Sob
+`reactStrictMode` — ligado no `next.config.ts` desde a Fase 0 —, o React monta, desmonta e
+remonta em desenvolvimento. Reproduzido fora do navegador, com React e StrictMode de verdade:
+
+```
+ANTIGO   criou blob:1 · criou blob:2 · renderiza com blob:1 · REVOGOU blob:1
+         → o src aponta para uma URL revogada: a imagem quebra (e blob:2 vazou)
+NOVO     criou blob:1 · revogou blob:1 · criou blob:2 · renderiza com blob:2
+         → o src aponta para uma URL viva: a imagem carrega
+```
+
+A correção é criar e revogar **no mesmo efeito**, que é o que torna a remontagem inofensiva. O
+inicializador do `useState` tinha entrado na Fase 7 para calar o `react-hooks/set-state-in-effect`
+— a regra estava certa sobre o sintoma e errada sobre a cura; agora o `setState` no efeito volta,
+com `eslint-disable-next-line` e o porquê no comentário.
+
+**O que isso ensina para a suíte que vem a seguir.** Os dois defeitos são invisíveis para
+qualquer verificação por HTTP: um depende de como o navegador desenha imagem que falha, o outro
+do ciclo de vida de efeito do React. O segundo, porém, foi reproduzido com `react-dom/client` em
+`jsdom` — exatamente a camada "Componente" da §7. É argumento para ela não ficar só nos
+formulários.
