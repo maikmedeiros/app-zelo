@@ -10,3 +10,12 @@ export const orNotFound = async <T>(promise: Promise<T>): Promise<T> => {
     throw error;
   }
 };
+
+export const orNull = async <T>(promise: Promise<T>): Promise<T | null> => {
+  try {
+    return await promise;
+  } catch (error) {
+    if (isApiError(error) && error.statusCode === 404) return null;
+    throw error;
+  }
+};

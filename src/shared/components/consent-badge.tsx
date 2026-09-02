@@ -16,10 +16,17 @@ const LABEL = {
   missing: 'sem registro',
 } as const;
 
+export const consentStateOf = (granted: boolean | null | undefined): ConsentState =>
+  granted === null || granted === undefined ? 'missing' : granted ? 'granted' : 'denied';
+
 export function ConsentBadge({ type, state }: { type: ConsentType; state: ConsentState }) {
   return (
     <Badge tone={TONE[state]}>
       {ptBR.enums.consentType[type]} · {LABEL[state]}
     </Badge>
   );
+}
+
+export function ConsentStateBadge({ state }: { state: ConsentState }) {
+  return <Badge tone={TONE[state]}>{LABEL[state]}</Badge>;
 }
