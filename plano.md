@@ -32,7 +32,7 @@ As diferenças que a 16 impôs estão registradas no [§12](#12-registro-de-exec
 | 6 — Turmas, alunos e matrículas    | ✅     |
 | 7 — Pessoas, papéis e usuários     | ✅     |
 | 8 — Vínculos e acessos             | ✅     |
-| 9 — Consentimento (LGPD)           | ⬜     |
+| 9 — Consentimento (LGPD)           | ✅     |
 | 10 — Relatórios e modelos          | ⬜     |
 | 11 — Administração e perfis        | ⬜     |
 | 12 — Acessibilidade e polimento    | ⬜     |
@@ -631,7 +631,7 @@ a mando de quem".
 **8.4** As três telas têm filtro `active=true|false` e mostram o histórico encerrado em tom
 secundário. Trocar responsável ou aluno não é editar: é encerrar e criar outro.
 
-### Fase 9 — Consentimento (LGPD) ⬜
+### Fase 9 — Consentimento (LGPD) ✅
 
 `GET|POST /students/:studentId/consents` · `DELETE /students/:studentId/consents/:consentId` ·
 `GET /classes/:classId/consents`
@@ -860,22 +860,22 @@ As 93 rotas da API e onde cada uma é consumida. **É o critério de conclusão 
 
 ## 10. Riscos e pontos de atenção
 
-| Risco                                                                                                                                     | Mitigação                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| O proxy catch-all vira encaminhador aberto para a rede interna                                                                            | Allowlist de prefixos de caminho e de métodos no Route Handler; nada de host vindo do cliente. Item **1.2**, e o `lint:security` do back é a referência de rigor.                                                                                                                                                                                                                                                                                                                                                   |
-| `Set-Cookie` não atravessa o BFF se o back passar a definir `SESSION_COOKIE_DOMAIN`                                                       | Em dev o domínio fica vazio e funciona. Em produção, ou o cookie fica sem `Domain`, ou o Next reescreve o header. Verificado no item **2.1**.                                                                                                                                                                                                                                                                                                                                                                       |
-| `PUBLIC_URL` do back aponta para `:3000/v1`, mas a API escuta em `:3003`                                                                  | O front usa `API_URL` explícito. Se alguma resposta trouxer URL montada a partir de `PUBLIC_URL`, corrigir o `.env` do back — `TODO(env)`.                                                                                                                                                                                                                                                                                                                                                                          |
-| `next/image` levaria 401 em mídia autenticada                                                                                             | `<img>` simples para mídia; `next/image` só para asset estático (§3.6).                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| Sem CSRF token no back — e o BFF torna o cookie **first-party**, o que amplia a superfície                                                | Registrar como limitação no texto do TCC. Mitigação prática: o proxy recusa requisição sem header `Origin`/`Sec-Fetch-Site` de mesma origem em métodos de escrita.                                                                                                                                                                                                                                                                                                                                                  |
-| Divergência silenciosa entre schema Zod do front e do back                                                                                | Handlers MSW copiados dos DTOs reais; teste de contrato quebra quando divergem.                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| Escopo `TURMA` mal aplicado deixa a família ver turma alheia                                                                              | Quem filtra é o back. O front **nunca** monta filtro de segurança — só de conveniência. Verificação por perfil ao fim das fases 4, 5 e 9.                                                                                                                                                                                                                                                                                                                                                                           |
-| Cache do Next servindo dado de um usuário para outro                                                                                      | `cache: 'no-store'` por padrão no `serverApi`, e nenhuma rota autenticada marcada como estática. É o risco mais grave da stack — vale um teste dedicado.                                                                                                                                                                                                                                                                                                                                                            |
-| Client Component demais engorda o bundle                                                                                                  | Auditoria na Fase 12; `'use client'` sempre o mais fundo possível na árvore (§2, regra 3).                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| Fase 11 (matriz de permissões) é a tela mais complexa do sistema                                                                          | Vem por último, quando o design system já está maduro; começa como tabela simples e só depois vira matriz.                                                                                                                                                                                                                                                                                                                                                                                                          |
-| `proxyClientMaxBodySize` **trunca o corpo em silêncio** ao estourar (não devolve erro), e o padrão do Next é 10 MB — igual ao teto da API | Configurado em `12mb`, dando folga para o envelope multipart. Um upload de 10 MB não pode chegar cortado à API e virar "imagem inválida".                                                                                                                                                                                                                                                                                                                                                                           |
-| CSP ainda não existe                                                                                                                      | Sem nonce só sairia uma política com `unsafe-inline`, que o Next exige para hidratar. Fica como `TODO(csp)` no `next.config.ts`, para a Fase 12 fazer com nonce via `proxy.ts`.                                                                                                                                                                                                                                                                                                                                     |
-| Consentimento revogado × mídia já publicada                                                                                               | A UI **não** promete apagar o passado: o texto do diálogo diz que a revogação vale daqui pra frente.                                                                                                                                                                                                                                                                                                                                                                                                                |
-| Sujeira de teste no banco de dev, deixada pela verificação das fases                                                                      | `TODO(seed)`: sobraram da Fase 6 a pessoa `Laura Teste` e a matrícula encerrada do Théo na Maternal II B; da Fase 7, a pessoa `Marina da Silva`, com papel de responsável e conta `marina.silva@zelo.test`; da Fase 8, três vigências encerradas — vínculo Marina↔Helena, vínculo Ana↔Maternal II B e acesso da Marina à Maternal II B. O estado **vigente** bate com o seed; o que sobra é histórico, que a API não apaga de propósito. Recriar o banco e rodar `npm run db:seed` antes de gerar print para o TCC. |
+| Risco                                                                                                                                     | Mitigação                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| O proxy catch-all vira encaminhador aberto para a rede interna                                                                            | Allowlist de prefixos de caminho e de métodos no Route Handler; nada de host vindo do cliente. Item **1.2**, e o `lint:security` do back é a referência de rigor.                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `Set-Cookie` não atravessa o BFF se o back passar a definir `SESSION_COOKIE_DOMAIN`                                                       | Em dev o domínio fica vazio e funciona. Em produção, ou o cookie fica sem `Domain`, ou o Next reescreve o header. Verificado no item **2.1**.                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `PUBLIC_URL` do back aponta para `:3000/v1`, mas a API escuta em `:3003`                                                                  | O front usa `API_URL` explícito. Se alguma resposta trouxer URL montada a partir de `PUBLIC_URL`, corrigir o `.env` do back — `TODO(env)`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `next/image` levaria 401 em mídia autenticada                                                                                             | `<img>` simples para mídia; `next/image` só para asset estático (§3.6).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Sem CSRF token no back — e o BFF torna o cookie **first-party**, o que amplia a superfície                                                | Registrar como limitação no texto do TCC. Mitigação prática: o proxy recusa requisição sem header `Origin`/`Sec-Fetch-Site` de mesma origem em métodos de escrita.                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| Divergência silenciosa entre schema Zod do front e do back                                                                                | Handlers MSW copiados dos DTOs reais; teste de contrato quebra quando divergem.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| Escopo `TURMA` mal aplicado deixa a família ver turma alheia                                                                              | Quem filtra é o back. O front **nunca** monta filtro de segurança — só de conveniência. Verificação por perfil ao fim das fases 4, 5 e 9.                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Cache do Next servindo dado de um usuário para outro                                                                                      | `cache: 'no-store'` por padrão no `serverApi`, e nenhuma rota autenticada marcada como estática. É o risco mais grave da stack — vale um teste dedicado.                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| Client Component demais engorda o bundle                                                                                                  | Auditoria na Fase 12; `'use client'` sempre o mais fundo possível na árvore (§2, regra 3).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| Fase 11 (matriz de permissões) é a tela mais complexa do sistema                                                                          | Vem por último, quando o design system já está maduro; começa como tabela simples e só depois vira matriz.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `proxyClientMaxBodySize` **trunca o corpo em silêncio** ao estourar (não devolve erro), e o padrão do Next é 10 MB — igual ao teto da API | Configurado em `12mb`, dando folga para o envelope multipart. Um upload de 10 MB não pode chegar cortado à API e virar "imagem inválida".                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| CSP ainda não existe                                                                                                                      | Sem nonce só sairia uma política com `unsafe-inline`, que o Next exige para hidratar. Fica como `TODO(csp)` no `next.config.ts`, para a Fase 12 fazer com nonce via `proxy.ts`.                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| Consentimento revogado × mídia já publicada                                                                                               | A UI **não** promete apagar o passado: o texto do diálogo diz que a revogação vale daqui pra frente.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| Sujeira de teste no banco de dev, deixada pela verificação das fases                                                                      | `TODO(seed)`: sobraram da Fase 6 a pessoa `Laura Teste` e a matrícula encerrada do Théo na Maternal II B; da Fase 7, a pessoa `Marina da Silva`, com papel de responsável e conta `marina.silva@zelo.test`; da Fase 8, três vigências encerradas — vínculo Marina↔Helena, vínculo Ana↔Maternal II B e acesso da Marina à Maternal II B; da Fase 9, um consentimento de uso externo da imagem da Helena, criado e revogado no mesmo minuto. O estado **vigente** bate com o seed; o que sobra é histórico, que a API não apaga de propósito. Recriar o banco e rodar `npm run db:seed` antes de gerar print para o TCC. |
 
 ---
 
@@ -1554,3 +1554,125 @@ botão.
   lá que a coordenação percebe a falta — a aba vazia diz "sem vínculo, ninguém publica nesta
   turma" — e obrigar a ida à tela de vínculos só para escolher a turma que já estava na tela
   seria atrito à toa.
+
+### Fase 9 — Consentimento (LGPD) ✅ (02/09/2026)
+
+**Entregue.** O consentimento é recurso do aluno — mora em `modules/students/`, como a agenda
+da Fase 5, e não em pasta própria: a URL do back é `/students/:studentId/consents`, e inventar
+um `modules/consents/` só duplicaria o dono. Vieram `schemas/consents.ts`,
+`api/find-list-consents.ts` (+ `.client`), `api/create-consent.client.ts`,
+`api/revoke-consent.client.ts` e cinco componentes: `ConsentSummary`, `ConsentHistoryTable`,
+`ConsentFilters`, `ConsentDialog`, `RevokeConsentButton` e `NewConsentButton`.
+
+Rota nova: `/students/[studentId]/consents`, com `loading.tsx` — o estado vigente dos três
+tipos em cartões no topo (9.1), o histórico datado e filtrável abaixo. O painel da turma da
+Fase 6, que era só uma tabela, ganhou `ClassConsentCounters` e `ClassConsentFilters` (9.4).
+
+Os enums `CONSENT_TYPES`/`CONSENT_ORIGINS` saíram de `modules/classes/types.ts`, onde a Fase 6
+os pousou por conveniência, e foram para `modules/students/types.ts` junto do `ConsentOutput`.
+`classes` agora os importa. O `consent-badge` compartilhado ganhou `consentStateOf` e
+`ConsentStateBadge` — a mesma regra "sem registro vigente = não" servindo os três lugares que
+a leem.
+
+**Verificação.** `npm run lint` e `npm run build` limpos. Tudo exercitado contra a API real em
+`:3003`, pelo BFF, com as cinco personas do seed.
+
+O 9.2 confirmado nos dois lados. O `refine` do cliente reproduz o do back, inclusive o
+`path: ['documentKey']` que faz o erro cair no campo certo:
+
+```
+verbal sem documento   → documentKey: Consentimento verbal exige o documento que o comprova
+documento só com espaço→ documentKey: string precisa de >= 1 caractere
+campo desconhecido     → Unrecognized key (strictObject, como no back)
+```
+
+E as três recusas do back, pelo BFF, com a sessão da Isabel:
+
+```
+POST   origin=SOLICITACAO_VERBAL sem documentKey → 400 cause[].path=["documentKey"]
+POST   origin=PORTAL_RESPONSAVEL como admin      → 403 "A origem PORTAL_RESPONSAVEL é do próprio responsável"
+POST   guardianId sem vínculo com a criança      → 422 "O responsável indicado não tem vínculo vigente"
+DELETE consentimento já encerrado                → 409 "Consentimento já encerrado"
+```
+
+O ciclo completo do 9.3 rodou na Helena: `POST` verbal com documento → 201 vigente; `DELETE` →
+204; a linha some do resumo ("sem registro vigente") e permanece no histórico com a vigência
+fechada e o tom secundário. **Substituir também foi verificado no back**: `create` encerra a
+vigência anterior do mesmo tipo dentro da transação, então o botão "Substituir" do cartão diz
+a verdade.
+
+O 9.4 na Maternal I A, com os contadores conferindo com as linhas:
+
+```
+Uso interno da imagem      2 autorizam · 0 negam · 1 sem registro
+Uso externo da imagem      0 autorizam · 0 negam · 3 sem registro
+Tratamento biométrico      0 autorizam · 0 negam · 3 sem registro
+
+?missing=IMAGEM_INTERNA → 1 resultado (Helena)
+?missing=IMAGEM_EXTERNA → 3 resultados
+?missing=lixo           → cai para "todas", sem erro
+```
+
+A matriz de acesso, com as capabilities que o seed dá a cada perfil:
+
+```
+                VIEW  CREATE  REVOKE   painel do aluno         painel da turma
+ADMIN            ok     ok      ok     lê e escreve            lê
+COORDENACAO      ok     ok      ok     lê e escreve (turma)    lê (turma)
+PROFESSOR        ok     —       —      lê, sem botão nenhum    lê
+RESPONSAVEL      ok     ok      ok     lê e escreve (filho)    lê
+sem perfil       —      —       —      → /403                  → /403
+```
+
+Zero resposta 5xx e nenhuma exceção no log do Next na bateria inteira.
+
+**Bug encontrado e corrigido.** Fora do escopo, a API devolve **404**, e as buscas de
+consentimento não estavam protegidas: a Diana abrindo o painel de uma criança de outra turma
+recebia a shell já transmitida e o conteúdo em branco — a mesma falha de streaming que a Fase
+6 achou no `RequireCapability`, só que pelo caminho do 404. As três buscas passaram a usar
+`orNotFound`, e o painel da turma junto (o defeito vinha da Fase 6). No **perfil** do aluno o
+tratamento é outro: o cartão de consentimento é acessório, então ele usa o `orNull` novo — o
+404 apaga o cartão em vez de derrubar a página inteira, porque quem tem `VIEW:STUDENT:ESCOLA`
+e `VIEW:CONSENT:TURMA` legitimamente vê a criança sem ver o consentimento dela. O botão
+**Consentimentos** do cabeçalho passou a depender de `consents !== null` em vez da capability
+sozinha: o mesmo 404 que apaga o cartão apaga o link, senão sobraria um botão levando a lugar
+nenhum.
+
+A correção foi medida contra si mesma — a versão sem `orNotFound` rebuildada e servida — porque
+o sintoma é invisível no HTML dos dois lados: o conteúdo chega no payload RSC, e a string
+`Página não encontrada` está em **toda** página, já que o Next serializa a fronteira de
+not-found junto do layout. O que separa os dois casos é o digest:
+
+```
+sem orNotFound   payload sem NEXT_HTTP_ERROR_FALLBACK
+                 log do Next: NotFoundError statusCode 404 digest 980533537  ← exceção escapou
+com orNotFound   payload com NEXT_HTTP_ERROR_FALLBACK;404
+                 log do Next: limpo
+```
+
+**Decisões registradas.**
+
+- **O campo do responsável signatário só aparece para quem enxerga vínculos.** O responsável
+  não tem `VIEW:GUARDIAN_LINK` — o back preenche o `guardianId` com o vínculo dele e recusa
+  assinar em nome de outro. Mostrar um seletor vazio seria mentir sobre o que ele pode fazer.
+  Para a escola, o seletor lista **só quem tem vínculo vigente com `canConsent`** — que é a
+  regra do 8.1 aparecendo do outro lado.
+- **As quatro origens ficam todas na lista.** `PORTAL_RESPONSAVEL` é do próprio responsável, e
+  o back recusa a escola usando-a; a tela explica isso no `hint` da origem escolhida em vez de
+  esconder a opção. Esconder faria a coordenação achar que a origem não existe.
+- **O contador lê a lista inteira, não a página.** `GET /classes/:classId/consents` não tem
+  agregação nem filtro de "sem consentimento" — os dois são do cliente. A busca pede
+  `limit: 100`, o teto do back, e um `TODO` marca o dia em que uma turma passar disso. Contar
+  só a página visível daria um número errado à pergunta que a tela existe para responder.
+- **O selo do 9.5 mostra os dois tipos de imagem, não os três.** O composer publica imagem; a
+  biometria não muda essa decisão. O selo se cala por completo para quem não tem
+  `VIEW:CONSENT` — o Fábio não vê nem que existe.
+- **Revogar não desaparece com a linha.** O cartão volta a "sem registro vigente" e o
+  histórico ganha a vigência fechada. É o mesmo princípio da Fase 8, e aqui ele é o produto:
+  a pergunta "podíamos publicar aquela foto em março?" só tem resposta se março continuar no
+  banco.
+
+**Não verificado por HTTP.** O comportamento interativo do `ConsentDialog` — o campo do
+documento que aparece ao escolher `SOLICITACAO_VERBAL` — e o selo do composer, que busca no
+cliente. O schema e os endpoints por trás dos dois foram exercitados; o clique, não, porque
+aqui só existe HTTP.
