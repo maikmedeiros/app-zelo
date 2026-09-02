@@ -177,7 +177,8 @@ export const ptBR = {
     title: 'Alguma coisa deu errado',
     description: 'Não conseguimos carregar esta parte da tela. Tente de novo em instantes.',
     notFoundTitle: 'Página não encontrada',
-    notFoundDescription: 'O endereço não existe ou o conteúdo foi removido.',
+    notFoundDescription:
+      'O endereço não existe, o conteúdo foi removido, ou ele está fora do que o seu perfil alcança. Volte ao início e navegue pelo menu.',
     backHome: 'Voltar para o início',
   },
 
