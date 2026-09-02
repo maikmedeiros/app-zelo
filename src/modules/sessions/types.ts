@@ -1,5 +1,6 @@
 export interface IdentityOutput {
   id: string;
+  personId: string;
   name: string;
   email: string;
   roles: string[];
