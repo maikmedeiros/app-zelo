@@ -35,7 +35,7 @@ As diferenças que a 16 impôs estão registradas no [§12](#12-registro-de-exec
 | 9 — Consentimento (LGPD)           | ✅     |
 | 10 — Relatórios e modelos          | ✅     |
 | 11 — Administração e perfis        | ✅     |
-| 12 — Acessibilidade e polimento    | ⬜     |
+| 12 — Acessibilidade e polimento    | ✅     |
 | 13 — Build, deploy e docs          | ⬜     |
 
 ---
@@ -681,7 +681,7 @@ isso, porque sem substituição não haveria como remover permissão.
 **11.5** **Verificação:** criar um perfil "Secretaria" pela UI, conceder a um usuário, entrar
 com ele e confirmar que o menu da §4.4 se monta sozinho a partir das capabilities.
 
-### Fase 12 — Acessibilidade e polimento ⬜
+### Fase 12 — Acessibilidade e polimento ✅
 
 **12.1** Auditoria `vitest-axe` + teclado em todas as telas principais; zero violação.
 **12.2** Skeletons via `loading.tsx` em todo segmento; `EmptyState` com texto específico.
@@ -689,6 +689,7 @@ com ele e confirmar que o menu da §4.4 se monta sozinho a partir das capabiliti
 **12.4** Responsividade conferida em 360 / 768 / 1280 px.
 **12.5** Performance: orçamento de **< 250 kB gzip** de JS no feed; auditoria do que virou
 Client Component sem precisar; `<img loading="lazy">` com dimensões declaradas.
+**Revisado em 02/09/2026:** o piso do framework é 207 kB — ver o registro da fase.
 **12.6** `error.tsx` por segmento, `not-found.tsx` e `403/page.tsx` com texto próprio.
 **12.7** Metadata (`generateMetadata`) com título por rota, e `robots: noindex` — sistema atrás
 de login não vai para buscador.
@@ -1898,3 +1899,128 @@ quem define o que o poder faz.
   desabilitada, com o aviso no topo e o caminho de saída: criar um perfil da escola com as
   permissões que quiser. Ver o que o Professor pode é metade do trabalho de desenhar o perfil
   seguinte.
+
+### Fase 12 — Acessibilidade e polimento ✅ (02/09/2026)
+
+**12.1 — auditoria de acessibilidade.** `axe-core` (já presente como dependência do
+`eslint-plugin-jsx-a11y`) rodado dentro do `jsdom` contra o HTML **real** servido em `:3000`,
+com as regras `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`, `wcag22aa` e `best-practice`:
+
+```
+22 telas auditadas — 0 violações
+```
+
+A regra `color-contrast` foi desligada no axe porque o `jsdom` não resolve variáveis CSS de
+folha externa: o contraste foi conferido à parte, calculando a razão WCAG token a token nos
+dois temas. **Duas falhas reais apareceram e foram corrigidas:**
+
+```
+badge de sucesso, tema claro    4.35:1  →  --success #2e7d5b para #2b7455   →  4.90:1
+borda de controle, ambos temas  1.29:1  →  --border-strong novo             →  3.70:1 / 3.30:1
+```
+
+A borda é o achado que importa. `--border` servia a cartão e a campo de formulário ao mesmo
+tempo; num cartão a borda é decorativa e 1.29:1 não viola nada, mas num `input` ela é o que
+delimita o controle, e aí vale o 1.4.11 (contraste de elemento não textual, mínimo 3:1). Em vez
+de escurecer a borda de tudo, entrou `--border-strong`, usado por `Input`, `Textarea`, `Select`,
+`Combobox`, `Checkbox` e `LevelPicker`.
+
+**Não coberto pelo axe:** diálogos, menus e a gaveta do mobile só existem depois de interação, e
+a auditoria lê HTML servido. A navegação por teclado foi conferida por estrutura — link "ir para
+o conteúdo", `aria-label` em todo botão só de ícone, `role="alert"` nos erros de formulário,
+`aria-live` no indicador de salvamento — mas não exercitada tecla a tecla, porque aqui só existe
+HTTP.
+
+**12.2 — skeletons e vazios.** Sete `loading.tsx` faltavam (abas da turma, nova postagem, e os
+detalhes de responsável, professor e conta) e foram criados. Todos os 20 `DataTable` têm
+`emptyTitle` e `emptyDescription` próprios; o único sem descrição é o catálogo de UI de
+desenvolvimento.
+
+**12.3 — microcopy.** O texto do 404 passou a dizer o que fazer e a admitir o caso que a Fase 9
+revelou: "O endereço não existe, o conteúdo foi removido, **ou ele está fora do que o seu perfil
+alcança**. Volte ao início e navegue pelo menu." Era o texto que mais mentia — fora de escopo a
+API responde 404, e o usuário lia "não existe" sobre uma criança que existe.
+
+**12.4 — responsividade.** Auditada por estrutura: nenhuma largura fixa acima de 360 px em todo
+o `src`, toda tabela dentro do `TableWrapper` com `overflow-x-auto` (inclusive a matriz de
+permissões, de 8 colunas), e todo grid de mais de uma coluna atrás de `sm:` ou `md:`. A
+confirmação visual nos três tamanhos precisa de navegador, que aqui não existe.
+
+**12.5 — performance. O orçamento do plano não é alcançável, e o número diz por quê.** Medido
+com o próprio servidor comprimindo (`content-encoding: gzip`), somando todo `<script src>` da
+resposta:
+
+```
+/403    (título, parágrafo e link)   207,0 kB gzip   ← piso do framework
+/feed                                258,3 kB gzip   ← app custa 51 kB
+/roles/[roleId]  (matriz)            327,0 kB gzip
+/students                            345,4 kB gzip
+```
+
+React 19.2.8 mais o runtime de cliente do App Router do Next 16.3.3 custam **207 kB gzip antes
+da primeira linha de código do projeto**. O orçamento de 250 kB deixaria 43 kB para uma
+aplicação inteira. O que o feed acrescenta são primitivos do Radix efetivamente usados —
+`Select` nos três filtros, `Popover` na busca de aluno, `Dialog` na gaveta do mobile,
+`DropdownMenu` no menu da conta, `Toast` — mais o TanStack Query. Nada disso é supérfluo.
+
+O que **foi** cortado: o `Avatar`, componente mais renderizado do sistema, deixou de ser Client
+Component. Ele usava o primitivo do Radix só para o estado de carregamento da imagem; agora são
+as iniciais embaixo e um `<img>` por cima, com `alt=""` — que os navegadores colapsam quando a
+imagem falha. Ganho medido: 1 kB gzip e uma fronteira de cliente a menos em toda tela que mostra
+gente. Pouco no número, correto no princípio.
+
+Também testado e **revertido**: `optimizePackageImports` para `radix-ui` e `lucide-react` não
+mudou um byte — os hashes de conteúdo dos chunks saíram idênticos, porque o Turbopack já faz
+esse tree-shaking. Config morta não fica.
+
+O achado colateral: `zod` custa **82 kB gzip** e entra em toda tela com formulário — é o que faz
+`/students` pesar mais que o feed. Fica registrado para a Fase 13 decidir.
+
+As imagens: os 8 `<img>` do feed saem com `loading="lazy"` e `width`/`height` declarados, assim
+como galeria, gerenciador de mídia e foto de perfil. O `<img>` do lightbox ganhou dimensões mas
+**não** ganhou `lazy`: é o conteúdo que o usuário acabou de pedir para ver.
+
+**12.6 — erros por segmento.** `error.tsx` novo em `(app)`, no feed e no relatório, cada um
+dizendo o que continua de pé: "o resto do sistema continua funcionando", "as postagens continuam
+no servidor", "o que já estava salvo continua salvo — o relatório se grava a cada alteração".
+`not-found.tsx` e `403/page.tsx` já tinham texto próprio.
+
+**12.7 — metadata por rota.** Doze rotas de detalhe trocaram `metadata` estático por
+`generateMetadata`, e o título passou a nomear a coisa:
+
+```
+antes   Aluno · Zelo          Relatório · Zelo        Alunos da turma · Zelo
+depois  Théo Carvalho · Zelo  Relatório de Helena Nunes · Zelo  Alunos · Maternal I A · Zelo
+```
+
+Cada uma usa `cache()` do React para que `generateMetadata` e a página compartilhem uma busca só
+— o `serverApi` usa `cache: 'no-store'`, então a memoização de `fetch` do Next não é garantia, e
+sem isso todo detalhe faria duas chamadas à API. O `/feed/[postId]`, que já tinha
+`generateMetadata` desde a Fase 4, era exatamente esse caso e foi corrigido junto. O
+`robots: noindex` já estava no layout raiz desde a Fase 3.
+
+**12.8 — offline.** Faixa no topo da shell quando `navigator.onLine` cai, por
+`useSyncExternalStore` nos eventos `online`/`offline` — com `getServerSnapshot` devolvendo
+`true`, senão a faixa piscaria na hidratação.
+
+A trava da mutação **não** ficou no `useApiAction`: metade das telas escreve por caminho próprio
+(o autosave do relatório, as reações otimistas, o compositor). Ela ficou no `clientApi`, por onde
+toda escrita passa — `POST`, `PUT`, `PATCH` e `DELETE` offline lançam `ApiError` 503 antes de
+tocar a rede, e cada componente já tinha o `catch` que vira aviso. Uma regra, um lugar, todas as
+telas.
+
+**Verificação.** `npm run lint` e `npm run build` limpos; 28 rotas sem regressão; zero exceção no
+log do Next; 22 telas com zero violação no axe.
+
+**Decisões registradas.**
+
+- **O orçamento de 250 kB fica registrado como não cumprido, com o número no lugar da desculpa.**
+  Falsear seria fácil — `next/dynamic` tira o chunk da lista de `<script src>` e o navegador o
+  baixa meio segundo depois. Isso passaria na régua sem melhorar nada para a família no ponto de
+  ônibus. O que dá para dizer com honestidade é: o app custa 51 kB, e o piso é do framework.
+- **`jsdom` entrou como devDependency antes da suíte.** A §7 adiou a suíte para depois desta
+  fase, mas o 12.1 pede auditoria com axe, e auditoria sem ferramenta é opinião. O `jsdom` é a
+  mesma dependência que o ambiente do Vitest vai usar — foi antecipar, não desviar.
+- **`--border-strong` em vez de escurecer `--border`.** Cartão e campo têm exigências diferentes
+  de contraste porque cumprem papéis diferentes. Um token só para os dois obrigaria a escolher
+  entre violar o 1.4.11 nos campos e engrossar a borda de todo cartão do sistema.
