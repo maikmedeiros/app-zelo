@@ -1,0 +1,21 @@
+'use client';
+
+import { Plus } from 'lucide-react';
+import { useState } from 'react';
+import { Button } from '@/shared/components/button';
+import { ClassAccessDialog } from './class-access-dialog';
+
+export function NewClassAccessButton() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Button size="sm" onClick={() => setOpen(true)}>
+        <Plus aria-hidden className="size-4" />
+        Conceder acesso
+      </Button>
+
+      {open && <ClassAccessDialog open={open} onOpenChange={setOpen} />}
+    </>
+  );
+}

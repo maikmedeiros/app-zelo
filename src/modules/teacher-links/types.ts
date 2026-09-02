@@ -13,10 +13,4 @@ export interface TeacherLinkOutput {
   endDate: string | null;
 }
 
-export type FindListTeacherLinksParams = {
-  page?: number;
-  limit?: number;
-  teacherId?: string;
-  classId?: string;
-  active?: boolean;
-};
+export const isCurrent = (link: TeacherLinkOutput): boolean => link.endDate === null;

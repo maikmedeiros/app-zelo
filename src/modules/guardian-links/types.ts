@@ -15,10 +15,4 @@ export interface GuardianLinkOutput {
   endDate: string | null;
 }
 
-export type FindListGuardianLinksParams = {
-  page?: number;
-  limit?: number;
-  guardianId?: string;
-  studentId?: string;
-  active?: boolean;
-};
+export const isCurrent = (link: GuardianLinkOutput): boolean => link.endDate === null;
