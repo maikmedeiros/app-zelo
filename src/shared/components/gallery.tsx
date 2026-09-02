@@ -68,6 +68,9 @@ export function Gallery({ items, className }: { items: GalleryItem[]; className?
               <img
                 src={current.src}
                 alt={current.alt}
+                width={current.width ?? 1200}
+                height={current.height ?? 1200}
+                decoding="async"
                 className="max-h-[80vh] max-w-full rounded-card object-contain"
               />
             )}

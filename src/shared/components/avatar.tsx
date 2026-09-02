@@ -1,6 +1,4 @@
-'use client';
-
-import { Avatar as AvatarPrimitive } from 'radix-ui';
+/* eslint-disable @next/next/no-img-element */
 import { cn } from '@/shared/utils/cn';
 
 const SIZES = {
@@ -8,6 +6,8 @@ const SIZES = {
   md: 'size-10 text-sm',
   lg: 'size-16 text-lg',
 } as const;
+
+const PIXELS = { sm: 32, md: 40, lg: 64 } as const;
 
 export type AvatarSize = keyof typeof SIZES;
 
@@ -29,27 +29,30 @@ const initials = (name: string): string =>
 
 export function Avatar({ name, personId, size = 'md', className }: AvatarProps) {
   return (
-    <AvatarPrimitive.Root
+    <span
       className={cn(
-        'inline-flex shrink-0 select-none items-center justify-center overflow-hidden rounded-full bg-brand-soft',
+        'relative inline-flex shrink-0 select-none items-center justify-center overflow-hidden rounded-full bg-brand-soft',
         SIZES[size],
         className,
       )}
     >
+      <span aria-hidden className="font-medium text-brand">
+        {initials(name)}
+      </span>
+
       {personId !== undefined && (
-        <AvatarPrimitive.Image
+        <img
           src={`/api/v1/people/${personId}/photo`}
           alt=""
+          width={PIXELS[size]}
+          height={PIXELS[size]}
           loading="lazy"
-          className="size-full object-cover"
+          decoding="async"
+          className="absolute inset-0 size-full object-cover"
         />
       )}
-      <AvatarPrimitive.Fallback delayMs={personId === undefined ? 0 : 200}>
-        <span aria-hidden className="font-medium text-brand">
-          {initials(name)}
-        </span>
-        <span className="sr-only">{name}</span>
-      </AvatarPrimitive.Fallback>
-    </AvatarPrimitive.Root>
+
+      <span className="sr-only">{name}</span>
+    </span>
   );
 }
