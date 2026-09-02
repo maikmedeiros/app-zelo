@@ -97,7 +97,7 @@ export function Combobox({
         <div
           className={cn(
             'flex w-full items-center gap-2 rounded-control border bg-surface px-3',
-            invalid ? 'border-danger' : 'border-border',
+            invalid ? 'border-danger' : 'border-border-strong',
             disabled && 'opacity-60',
             className,
           )}

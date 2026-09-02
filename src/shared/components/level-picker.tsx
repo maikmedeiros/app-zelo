@@ -40,7 +40,7 @@ export function LevelPicker({
             value={level}
             id={`${name}-${level}`}
             className={cn(
-              'min-h-11 rounded-control border border-border px-3 text-sm',
+              'min-h-11 rounded-control border border-border-strong px-3 text-sm',
               'data-[state=checked]:border-brand data-[state=checked]:bg-brand-soft data-[state=checked]:text-brand',
               'disabled:pointer-events-none disabled:opacity-60',
             )}
