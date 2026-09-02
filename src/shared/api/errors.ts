@@ -43,3 +43,9 @@ export const networkError = (cause: unknown): ApiError =>
     message: 'Não foi possível falar com o servidor. Tente novamente.',
     cause,
   });
+
+export const offlineError = (): ApiError =>
+  new ApiError(503, {
+    error: 'OfflineError',
+    message: 'Sem conexão. Nada foi enviado — tente de novo quando a internet voltar.',
+  });

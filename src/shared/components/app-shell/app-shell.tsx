@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import type { ReactNode } from 'react';
+import { OfflineBanner } from '@/shared/components/offline-banner';
 import { ptBR } from '@/shared/i18n/pt-BR';
 import { MobileNav } from './mobile-nav';
 import { SideNav } from './side-nav';
@@ -21,6 +22,8 @@ export async function AppShell({ children }: { children: ReactNode }) {
       >
         {ptBR.common.skipToContent}
       </a>
+
+      <OfflineBanner />
 
       <header className="sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-border bg-surface px-4 py-2">
         <Link href="/" className="flex items-center text-lg font-semibold text-brand">

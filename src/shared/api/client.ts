@@ -1,7 +1,9 @@
 import 'client-only';
-import { ApiError, networkError } from './errors';
+import { ApiError, networkError, offlineError } from './errors';
 import { toQueryString } from './query-string';
 import type { ApiErrorBody, HttpMethod, RequestOptions } from './types';
+
+const MUTATIONS = new Set<HttpMethod>(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 const BFF_PREFIX = '/api/v1';
 const AUTH_PREFIX = '/api/auth';
@@ -64,6 +66,8 @@ const request = async <T>(
   url: string,
   options: ClientRequestOptions = {},
 ): Promise<T> => {
+  if (MUTATIONS.has(method) && !navigator.onLine) throw offlineError();
+
   const hasBody = options.body !== undefined;
   const isFormData = options.body instanceof FormData;
 
