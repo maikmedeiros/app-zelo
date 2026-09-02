@@ -15,6 +15,7 @@ export interface DataTableProps<T> {
   data: Paginated<T>;
   columns: Column<T>[];
   rowKey: (row: T) => string;
+  rowClassName?: (row: T) => string | undefined;
   emptyTitle: string;
   emptyDescription?: string;
   emptyAction?: ReactNode;
@@ -24,6 +25,7 @@ export function DataTable<T>({
   data,
   columns,
   rowKey,
+  rowClassName,
   emptyTitle,
   emptyDescription,
   emptyAction,
@@ -47,7 +49,7 @@ export function DataTable<T>({
           </THead>
           <TBody>
             {data.results.map((row) => (
-              <Tr key={rowKey(row)}>
+              <Tr key={rowKey(row)} className={rowClassName?.(row)}>
                 {columns.map((column) => (
                   <Td key={column.key} className={column.align === 'right' ? 'text-right' : ''}>
                     {column.cell(row)}
