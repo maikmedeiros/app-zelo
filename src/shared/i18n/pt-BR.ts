@@ -95,6 +95,12 @@ export const ptBR = {
       EM_DESENVOLVIMENTO: 'Em desenvolvimento',
       CONSOLIDADO: 'Consolidado',
     },
+    reportLevelHint: {
+      NAO_OBSERVADO: 'Não houve situação no período para observar isso. Não é atraso.',
+      EM_INICIO: 'Começou a aparecer, ainda com apoio do adulto na maior parte das vezes.',
+      EM_DESENVOLVIMENTO: 'Acontece com frequência, e a criança precisa de ajuda de vez em quando.',
+      CONSOLIDADO: 'Faz sozinha, no dia a dia, sem precisar de lembrete.',
+    },
     reportStatus: {
       RASCUNHO: 'Rascunho',
       PUBLICADO: 'Publicado',
