@@ -140,7 +140,7 @@ export function CommentSection({
 
             return (
               <li key={comment.id} className="flex gap-3">
-                <Avatar name={comment.authorName} personId={comment.authorId} size="sm" />
+                <Avatar name={comment.authorName} personId={comment.authorPersonId} size="sm" />
 
                 <div className="flex flex-1 flex-col gap-1">
                   <div className="flex items-center justify-between gap-2">

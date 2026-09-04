@@ -40,7 +40,7 @@ export function JournalEntryCard({
         isReply && 'ml-6 border-l-4 border-l-brand-soft sm:ml-10',
       )}
     >
-      <Avatar name={entry.authorName} personId={entry.authorId} size="sm" />
+      <Avatar name={entry.authorName} personId={entry.authorPersonId} size="sm" />
 
       <div className="flex flex-1 flex-col gap-1">
         <div className="flex flex-wrap items-center justify-between gap-2">

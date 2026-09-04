@@ -12,6 +12,7 @@ export interface JournalEntryOutput {
   classId: string;
   className: string;
   authorId: string;
+  authorPersonId: string;
   authorName: string;
   repliesToId: string | null;
   text: string | null;

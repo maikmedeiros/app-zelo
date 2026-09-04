@@ -42,7 +42,7 @@ export function UserMenu({ theme }: { theme: ThemeChoice }) {
         aria-label={`Conta de ${session.name}`}
         className="flex items-center gap-2 rounded-control p-1 hover:bg-surface-muted"
       >
-        <Avatar name={session.name} personId={session.id} size="sm" />
+        <Avatar name={session.name} personId={session.personId} size="sm" />
       </DropdownMenuTrigger>
 
       <DropdownMenuContent>

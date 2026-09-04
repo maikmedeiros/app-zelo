@@ -29,7 +29,7 @@ export function PostCard({
     <Card>
       <CardContent className="flex flex-col gap-3">
         <div className="flex items-center gap-3">
-          <Avatar name={post.authorName} personId={post.authorId} size="sm" />
+          <Avatar name={post.authorName} personId={post.authorPersonId} size="sm" />
           <span className="font-medium">{post.authorName}</span>
         </div>
 
